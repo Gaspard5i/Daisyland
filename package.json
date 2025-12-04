@@ -1,0 +1,30 @@
+{
+  "name": "daisyland",
+  "version": "1.0.0",
+  "description": "Projet nuit de l'info 2025-2026",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Gaspard5i/Daisyland.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Gaspard5i/Daisyland/issues"
+  },
+  "homepage": "https://github.com/Gaspard5i/Daisyland#readme",
+  "dependencies": {
+    "pixi.js": "^8.14.3"
+  },
+  "devDependencies": {
+    "vite": "^7.2.6"
+  }
+}
