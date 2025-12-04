@@ -1,0 +1,61 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+.npm/
+
+# Build output
+dist/
+build/
+out/
+coverage/
+.cache/
+.parcel-cache/
+.vite/
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env
+.env.*.local
+.env.local
+
+# IDEs and editors
+.idea/
+*.iml
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# Package bundles
+*.tgz
+
+# Lockfiles (optional - keep if you want deterministic installs)
+# package-lock.json
+# yarn.lock
+
+# Misc
+coverage/
+.env.test
+
+# End of file
+
