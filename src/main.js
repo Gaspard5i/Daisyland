@@ -6,6 +6,7 @@ import { MiniGameScene } from './game/scenes/MiniGameScene.js';
 import { MainMenuScene } from './game/scenes/MainMenuScene.js';
 import { GameMetrics } from './core/GameMetrics.js';
 import { MetricsBar } from './ui/MetricsBar.js';
+import { PreferencesBar } from './ui/PreferencesBar.js';
 import { FabricWindow } from './ui/FabricWindow.js';
 import { MarketWindow } from './ui/MarketWindow.js';
 import { FishingWindow } from './ui/FishingWindow.js';
@@ -13,7 +14,6 @@ import { UserBar } from './ui/UserBar.js';
 import { CollectionScene } from './game/scenes/CollectionScene.js';
 import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
 import { WasteManager } from './game/systems/WasteManager.js';
-import { SaveManager } from "./core/SaveManager.js";
 import { initTooltip } from './ui/Tooltip.js';
 
 (async () => {
@@ -28,6 +28,7 @@ import { initTooltip } from './ui/Tooltip.js';
     // Initialiser les métriques du jeu
     const gameMetrics = new GameMetrics();
     const metricsBar = new MetricsBar();
+    const preferencesBar = new PreferencesBar(gameMetrics);
 
     gameMetrics.addListener((metrics) => {
       metricsBar.updateMetrics(metrics);
@@ -135,6 +136,7 @@ import { initTooltip } from './ui/Tooltip.js';
         // Ici on part du principe que c'est le premier lancement ou qu'on veut reset
         // gameMetrics.reset(); // Si la méthode existe, sinon c'est déjà les valeurs par défaut au lancement
         metricsBar.visible = true;
+        preferencesBar.visible = true;
         sceneManager.goTo('farm');
       },
       onLoadGame: (metrics) => {
@@ -144,6 +146,7 @@ import { initTooltip } from './ui/Tooltip.js';
             // Met à jour chaque métrique
             gameMetrics.setMetrics(metrics);
             metricsBar.visible = true;
+            preferencesBar.visible = true;
             sceneManager.goTo('farm');
         }
       }
@@ -165,6 +168,10 @@ import { initTooltip } from './ui/Tooltip.js';
     // Ajouter la barre de métriques tout en haut (toujours visible)
     app.stage.addChild(metricsBar);
     metricsBar.visible = false; // Cacher initialement
+
+    // Ajouter la barre de préférences (sauvegarde)
+    app.stage.addChild(preferencesBar);
+    preferencesBar.visible = false;
 
     app.stage.addChild(fabricWindow);
     app.stage.addChild(marketWindow);
