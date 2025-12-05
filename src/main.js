@@ -3,8 +3,13 @@ import { SceneManager } from './core/SceneManager.js';
 import { FarmScene } from './game/scenes/FarmScene.js';
 import { ContinentScene } from './game/scenes/ContinentScene.js';
 import { MiniGameScene } from './game/scenes/MiniGameScene.js';
+import { MainMenuScene } from './game/scenes/MainMenuScene.js';
 import { GameMetrics } from './core/GameMetrics.js';
 import { MetricsBar } from './ui/MetricsBar.js';
+import { PreferencesBar } from './ui/PreferencesBar.js';
+import { FabricWindow } from './ui/FabricWindow.js';
+import { MarketWindow } from './ui/MarketWindow.js';
+import { FishingWindow } from './ui/FishingWindow.js';
 import { UserBar } from './ui/UserBar.js';
 import { CollectionScene } from './game/scenes/CollectionScene.js';
 import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
@@ -33,6 +38,7 @@ import { AudioManager } from './core/AudioManager.js';
     // Initialiser les métriques du jeu
     const gameMetrics = new GameMetrics();
     const metricsBar = new MetricsBar();
+    const preferencesBar = new PreferencesBar(gameMetrics);
 
     gameMetrics.addListener((metrics) => {
       metricsBar.updateMetrics(metrics);
@@ -43,6 +49,20 @@ import { AudioManager } from './core/AudioManager.js';
       gameMetrics.setMetric('waste', totalWaste);
     });
 
+    // Fenêtres UI (modales) - créées en premier pour être disponibles dans les callbacks
+    const fabricWindow = new FabricWindow(app, () => {
+      console.log('Fabric window closed');
+    }, gameMetrics);
+
+    const marketWindow = new MarketWindow(app, () => {
+      console.log('Market window closed');
+    }, gameMetrics);
+
+    const fishingWindow = new FishingWindow(app, () => {
+      console.log('Fishing window closed');
+    }, gameMetrics);
+
+    // Créer les scènes
     // Démarrer le système de remplissage passif des zones de collecte
     CollectionZoneManager.start();
     console.log('♻️ Zones de collecte actives - remplissage passif démarré');
@@ -71,6 +91,20 @@ import { AudioManager } from './core/AudioManager.js';
 
     // Créer la scène principale (ferme/île)
     const farmScene = new FarmScene(app, (id, name) => {
+
+        if (id === 'port-east') {
+            marketWindow.open();
+            return;
+        }
+        if (id === 'farm-3') {
+            fabricWindow.open();
+            return;
+        }
+        if (id === 'farm-6'){
+            fishingWindow.open();
+            return;
+        }
+
       // Si c'est le 8ème continent, naviguer vers cette scène
       if (id === '8eme-continent') {
         sceneManager.goTo('continent');
@@ -105,7 +139,31 @@ import { AudioManager } from './core/AudioManager.js';
       }
     );
 
+    // Créer le menu principal
+    const mainMenuScene = new MainMenuScene(app, {
+      onNewGame: () => {
+        // Nouvelle partie : on s'assure que les métriques sont reset si nécessaire
+        // Ici on part du principe que c'est le premier lancement ou qu'on veut reset
+        // gameMetrics.reset(); // Si la méthode existe, sinon c'est déjà les valeurs par défaut au lancement
+        metricsBar.visible = true;
+        preferencesBar.visible = true;
+        sceneManager.goTo('farm');
+      },
+      onLoadGame: (metrics) => {
+        // Charger partie : mettre à jour les métriques
+        console.log('Chargement de la sauvegarde...', metrics);
+        if (metrics) {
+            // Met à jour chaque métrique
+            gameMetrics.setMetrics(metrics);
+            metricsBar.visible = true;
+            preferencesBar.visible = true;
+            sceneManager.goTo('farm');
+        }
+      }
+    });
+
     // Enregistrer les scènes dans le SceneManager
+    sceneManager.register('mainMenu', mainMenuScene);
     sceneManager.register('farm', farmScene);
     sceneManager.register('continent', continentScene);
 
@@ -119,9 +177,25 @@ import { AudioManager } from './core/AudioManager.js';
 
     // Ajouter la barre de métriques tout en haut (toujours visible)
     app.stage.addChild(metricsBar);
+    metricsBar.visible = false; // Cacher initialement
 
-    // Afficher la scène de départ
-    sceneManager.showImmediate('farm');
+    // Ajouter la barre de préférences (sauvegarde)
+    app.stage.addChild(preferencesBar);
+    preferencesBar.visible = false;
+
+    app.stage.addChild(fabricWindow);
+    app.stage.addChild(marketWindow);
+    app.stage.addChild(fishingWindow);
+
+    // Exposer les fenêtres globalement pour le debug (optionnel)
+    window.gameWindows = {
+      fabric: fabricWindow,
+      market: marketWindow,
+      fishing: fishingWindow,
+    };
+
+    // Afficher la scène de menu principal
+    sceneManager.showImmediate('mainMenu');
 
     console.log('Daisyland initialisé !');
 

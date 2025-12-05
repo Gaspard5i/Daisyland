@@ -4,7 +4,6 @@
  */
 
 import { Container, Graphics, Text } from 'pixi.js';
-import { COLORS, FONTS } from '../utils/Constants.js';
 import { createWoodPanel } from './WoodStyle.js';
 import { addTooltip } from './Tooltip.js';
 

@@ -54,6 +54,7 @@ export const COLORS = {
   
   // Général
   BACKGROUND: 0x1099bb,
+  TEXT_DARK: 0x222222,
 };
 
 // ==================== UI ====================
