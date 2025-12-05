@@ -14,16 +14,14 @@ import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
 
     console.log('Pixi app started');
 
+    // Initialiser les métriques du jeu
     const gameMetrics = new GameMetrics();
-
     const metricsBar = new MetricsBar();
 
     gameMetrics.addListener((metrics) => {
       metricsBar.updateMetrics(metrics);
     });
-
     metricsBar.updateMetrics(gameMetrics.getAllMetrics());
-
 
     // Démarrer le système de remplissage passif des zones de collecte
     CollectionZoneManager.start();
@@ -53,15 +51,50 @@ import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
 
     // Créer la scène principale (ferme/île)
     const farmScene = new FarmScene(app, (id, name) => {
-      // Callback ouverture lieu : cacher carte, ouvrir mini-jeu
+      // Si c'est le 8ème continent, naviguer vers cette scène
+      if (id === '8eme-continent') {
+        sceneManager.goTo('continent');
+        return;
+      }
+      
+      // Sinon, ouvrir le mini-jeu
       farmScene.hide();
       miniGameScene.open(id, name);
     });
 
-    // Ajouter les scènes au stage
-    app.stage.addChild(farmScene);
+    // Créer la scène du 8ème Continent
+    const continentScene = new ContinentScene(
+      app,
+      (id, name) => {
+        // Zones de collecte → ouvrir la scène de collecte
+        if (id.startsWith('collection-')) {
+          continentScene.hide();
+          collectionScene.open(id, name);
+          return;
+        }
+        
+        // Autres lieux → ouvrir le mini-jeu générique
+        continentScene.hide();
+        miniGameScene.open(id, name);
+      },
+      (targetScene) => {
+        // Naviguer vers une autre scène (retour à la ferme)
+        if (targetScene === 'farm') {
+          sceneManager.goTo('farm');
+        }
+      }
+    );
+
+    // Enregistrer les scènes dans le SceneManager
+    sceneManager.register('farm', farmScene);
+    sceneManager.register('continent', continentScene);
+
+    // Ajouter les overlays par-dessus (mini-jeu et collecte)
     app.stage.addChild(miniGameScene);
     app.stage.addChild(collectionScene);
+
+    // Ajouter la barre de métriques tout en haut (toujours visible)
+    app.stage.addChild(metricsBar);
 
     // Afficher la scène de départ
     sceneManager.showImmediate('farm');
@@ -70,6 +103,10 @@ import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
 
     // Exposer pour le debug
     window.app = app;
+    window.sceneManager = sceneManager;
+    window.gameMetrics = gameMetrics;
     window.farmScene = farmScene;
+    window.continentScene = continentScene;
     window.miniGameScene = miniGameScene;
+    window.collectionScene = collectionScene;
 })();
