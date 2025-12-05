@@ -8,7 +8,6 @@ import { MetricsBar } from './ui/MetricsBar.js';
 import { UserBar } from './ui/UserBar.js';
 import { CollectionScene } from './game/scenes/CollectionScene.js';
 import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
-import { initTooltip } from './ui/Tooltip.js';
 import { WasteManager } from './game/systems/WasteManager.js';
 import { initTooltip } from './ui/Tooltip.js';
 
