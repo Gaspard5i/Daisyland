@@ -1,31 +1,35 @@
-import { Application } from 'pixi.js';
-import { startGame } from './game.js';
-
+import { createApp, mountApp } from './core/App.js';
+import { FarmScene } from './game/scenes/FarmScene.js';
+import { MiniGameScene } from './game/scenes/MiniGameScene.js';
 
 (async () => {
-    // Create the Pixi application
-    const app = new Application();
-
-    await app.init({
-        width: 800,           // Canvas width
-        height: 600,          // Canvas height
-        backgroundColor: 0x1099bb, // Background color
-        antialias: true,     // Enable antialiasing
-        resolution: 1,       // Resolution / device pixel ratio
-        preference: 'webgl', // or 'webgpu' // Renderer preference
-    });
-
-    // Append view to the DOM
-    const container = document.getElementById('app') || document.body;
-    container.appendChild(app.view);
+    // Créer et initialiser l'application PixiJS
+    const app = await createApp();
+    mountApp(app, 'app');
 
     console.log('Pixi app started');
 
-    // Start the game and keep the API (stop/getter) for future use
-    const gameApi = startGame(app);
-    // expose for debugging or later control
-    window.gameApi = gameApi;
+    // Créer les scènes
+    const miniGameScene = new MiniGameScene(app, () => {
+      // Callback retour : fermer mini-jeu, afficher carte
+      miniGameScene.close();
+      farmScene.show();
+    });
+    
+    const farmScene = new FarmScene(app, (id, name) => {
+      // Callback ouverture lieu : cacher carte, ouvrir mini-jeu
+      farmScene.hide();
+      miniGameScene.open(id, name);
+    });
 
-    // Expose app too
+    // Ajouter les scènes au stage
+    app.stage.addChild(farmScene);
+    app.stage.addChild(miniGameScene);
+
+    console.log('Daisyland initialisé !');
+
+    // Exposer pour le debug
     window.app = app;
+    window.farmScene = farmScene;
+    window.miniGameScene = miniGameScene;
 })();
