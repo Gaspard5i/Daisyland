@@ -50,20 +50,6 @@ export function startGame(app) {
   drawBackground();
   mapContainer.addChild(bg);
 
-  // Title (fixed in UI, not on map)
-  const titleStyle = { fontFamily: 'Arial', fontSize: 36, fill: 0xffffff, dropShadow: true, dropShadowDistance: 2 };
-  const title = new PIXI.Text('Carte de Daisyland', titleStyle);
-  title.x = 20;
-  title.y = 20;
-  uiContainer.addChild(title);
-
-  // Instruction pour le drag (UI fixe)
-  const instructionStyle = { fontFamily: 'Arial', fontSize: 14, fill: 0xffffff, dropShadow: true, dropShadowDistance: 1 };
-  const instruction = new PIXI.Text('🖱️ Maintenez clic + glissez pour déplacer la carte', instructionStyle);
-  instruction.x = 20;
-  instruction.y = 60;
-  uiContainer.addChild(instruction);
-
   // Helper to create a button on the map
   function createMapButton(x, y, labelText, id) {
     const btn = new PIXI.Graphics();

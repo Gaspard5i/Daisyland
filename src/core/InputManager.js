@@ -1,6 +1,6 @@
 /**
  * InputManager.js
- * Gestionnaire des entrées utilisateur (souris/touch) pour le déplacement de la carte
+ * Gestionnaire des entrées utilisateur (souris/touch) pour le déplacement et zoom de la carte
  */
 
 export class InputManager {
@@ -17,6 +17,16 @@ export class InputManager {
     this.dragStart = { x: 0, y: 0 };
     this.containerStart = { x: 0, y: 0 };
     
+    // Configuration du zoom
+    this.zoomLevel = 1;
+    this.minZoom = 0.5;
+    this.maxZoom = 2;
+    this.zoomStep = 0.1;
+    
+    // Taille de la map
+    this.mapWidth = 0;
+    this.mapHeight = 0;
+    
     // Limites de déplacement (optionnel)
     this.bounds = null;
     
@@ -28,6 +38,7 @@ export class InputManager {
     this._onPointerMove = this._onPointerMove.bind(this);
     this._onPointerUp = this._onPointerUp.bind(this);
     this._onPointerLeave = this._onPointerLeave.bind(this);
+    this._onWheel = this._onWheel.bind(this);
     
     this._setupEvents();
   }
@@ -45,6 +56,9 @@ export class InputManager {
     this.app.stage.on('pointerup', this._onPointerUp);
     this.app.stage.on('pointerupoutside', this._onPointerUp);
     this.app.stage.on('pointerleave', this._onPointerLeave);
+    
+    // Événement de la molette pour le zoom
+    this.canvas.addEventListener('wheel', this._onWheel, { passive: false });
   }
   
   /**
@@ -56,20 +70,121 @@ export class InputManager {
   }
   
   /**
-   * Calcule les limites automatiquement basées sur la taille de la map
+   * Calcule les limites automatiquement basées sur la taille de la map et le zoom
    * @param {number} mapWidth - Largeur totale de la map
    * @param {number} mapHeight - Hauteur totale de la map
    */
   setMapSize(mapWidth, mapHeight) {
+    this.mapWidth = mapWidth;
+    this.mapHeight = mapHeight;
+    this._updateBounds();
+  }
+  
+  /**
+   * Met à jour les limites en fonction du zoom actuel
+   */
+  _updateBounds() {
     const screenWidth = this.app.renderer.width;
     const screenHeight = this.app.renderer.height;
+    const scaledMapWidth = this.mapWidth * this.zoomLevel;
+    const scaledMapHeight = this.mapHeight * this.zoomLevel;
     
-    this.bounds = {
-      minX: screenWidth - mapWidth,
-      maxX: 0,
-      minY: screenHeight - mapHeight,
-      maxY: 0
-    };
+    // Si la map zoomée est plus petite que l'écran, centrer
+    if (scaledMapWidth <= screenWidth) {
+      const centerX = (screenWidth - scaledMapWidth) / 2;
+      this.bounds = {
+        ...this.bounds,
+        minX: centerX,
+        maxX: centerX
+      };
+    } else {
+      this.bounds = {
+        ...this.bounds,
+        minX: screenWidth - scaledMapWidth,
+        maxX: 0
+      };
+    }
+    
+    if (scaledMapHeight <= screenHeight) {
+      const centerY = (screenHeight - scaledMapHeight) / 2;
+      this.bounds = {
+        ...this.bounds,
+        minY: centerY,
+        maxY: centerY
+      };
+    } else {
+      this.bounds = {
+        ...this.bounds,
+        minY: screenHeight - scaledMapHeight,
+        maxY: 0
+      };
+    }
+  }
+  
+  /**
+   * Applique les limites à la position actuelle
+   */
+  _clampPosition() {
+    if (this.bounds) {
+      this.target.x = Math.max(this.bounds.minX, Math.min(this.bounds.maxX, this.target.x));
+      this.target.y = Math.max(this.bounds.minY, Math.min(this.bounds.maxY, this.target.y));
+    }
+  }
+  
+  /**
+   * Événement de la molette de souris pour le zoom
+   */
+  _onWheel(event) {
+    event.preventDefault();
+    
+    // Position de la souris relative au canvas
+    const rect = this.canvas.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+    
+    // Position de la souris dans le monde (avant zoom)
+    const worldX = (mouseX - this.target.x) / this.zoomLevel;
+    const worldY = (mouseY - this.target.y) / this.zoomLevel;
+    
+    // Calculer le nouveau niveau de zoom
+    const oldZoom = this.zoomLevel;
+    if (event.deltaY < 0) {
+      // Zoom in (molette vers le haut)
+      this.zoomLevel = Math.min(this.maxZoom, this.zoomLevel + this.zoomStep);
+    } else {
+      // Zoom out (molette vers le bas)
+      this.zoomLevel = Math.max(this.minZoom, this.zoomLevel - this.zoomStep);
+    }
+    
+    // Appliquer le zoom
+    this.target.scale.set(this.zoomLevel);
+    
+    // Ajuster la position pour zoomer vers le curseur
+    this.target.x = mouseX - worldX * this.zoomLevel;
+    this.target.y = mouseY - worldY * this.zoomLevel;
+    
+    // Mettre à jour les limites et clamper la position
+    this._updateBounds();
+    this._clampPosition();
+  }
+  
+  /**
+   * Définit le niveau de zoom programmatiquement
+   * @param {number} zoom - Niveau de zoom (entre minZoom et maxZoom)
+   */
+  setZoom(zoom) {
+    this.zoomLevel = Math.max(this.minZoom, Math.min(this.maxZoom, zoom));
+    this.target.scale.set(this.zoomLevel);
+    this._updateBounds();
+    this._clampPosition();
+  }
+  
+  /**
+   * Retourne le niveau de zoom actuel
+   * @returns {number}
+   */
+  getZoom() {
+    return this.zoomLevel;
   }
   
   /**
@@ -167,6 +282,8 @@ export class InputManager {
     this.app.stage.off('pointerup', this._onPointerUp);
     this.app.stage.off('pointerupoutside', this._onPointerUp);
     this.app.stage.off('pointerleave', this._onPointerLeave);
+    
+    this.canvas.removeEventListener('wheel', this._onWheel);
     
     this.canvas.style.cursor = 'default';
   }
