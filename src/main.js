@@ -5,15 +5,21 @@ import { ContinentScene } from './game/scenes/ContinentScene.js';
 import { MiniGameScene } from './game/scenes/MiniGameScene.js';
 import { GameMetrics } from './core/GameMetrics.js';
 import { MetricsBar } from './ui/MetricsBar.js';
+import { UserBar } from './ui/UserBar.js';
 import { CollectionScene } from './game/scenes/CollectionScene.js';
 import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
+import { initTooltip } from './ui/Tooltip.js';
 import { WasteManager } from './game/systems/WasteManager.js';
+import { initTooltip } from './ui/Tooltip.js';
 
 (async () => {
     const app = await createApp();
     mountApp(app, 'app');
 
     console.log('Pixi app started');
+
+    // Initialiser le système de tooltips en premier (nécessaire avant de créer les UI)
+    initTooltip(app.stage);
 
     // Initialiser les métriques du jeu
     const gameMetrics = new GameMetrics();
@@ -98,6 +104,10 @@ import { WasteManager } from './game/systems/WasteManager.js';
     app.stage.addChild(miniGameScene);
     app.stage.addChild(collectionScene);
 
+    // Ajouter la barre utilisateur en haut à gauche
+    const userBar = new UserBar();
+    app.stage.addChild(userBar);
+
     // Ajouter la barre de métriques tout en haut (toujours visible)
     app.stage.addChild(metricsBar);
 
@@ -110,6 +120,7 @@ import { WasteManager } from './game/systems/WasteManager.js';
     window.app = app;
     window.sceneManager = sceneManager;
     window.gameMetrics = gameMetrics;
+    window.userBar = userBar;
     window.farmScene = farmScene;
     window.continentScene = continentScene;
     window.miniGameScene = miniGameScene;
