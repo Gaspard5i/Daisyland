@@ -1,0 +1,54 @@
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  
+  <defs>
+    <color id="c-pierre" value="#E0E0E0"/>      <color id="c-pierre-ombre" value="#BDBDBD"/> <color id="c-joint" value="#757575"/>        <color id="c-eau" value="#00B0FF"/>          <color id="c-bois" value="#8D6E63"/>         <color id="c-toit" value="#D84315"/>         </defs>
+
+  <g transform="translate(200, 250)">
+
+    <ellipse cx="0" cy="-50" rx="90" ry="35" fill="#3E2723"/>
+
+    <ellipse cx="0" cy="-45" rx="80" ry="30" fill="#00B0FF"/>
+    <ellipse cx="-30" cy="-50" rx="20" ry="5" fill="white" opacity="0.4"/>
+
+
+    <g fill="#8D6E63" stroke="#5D4037" stroke-width="2">
+        <rect x="-95" y="-200" width="15" height="250" />
+        <rect x="80" y="-200" width="15" height="250" />
+    </g>
+
+
+    <path d="M -100 -50 L -100 50 C -100 90 100 90 100 50 L 100 -50" 
+          fill="#E0E0E0" stroke="#757575" stroke-width="3"/>
+
+    <g fill="none" stroke="#757575" stroke-width="2" opacity="0.6">
+        <path d="M -100 -20 Q 0 10 100 -20" />
+        <path d="M -100 20 Q 0 50 100 20" />
+        
+        <path d="M 0 -20 L 0 20" />
+        <path d="M -50 -50 L -50 -20" />
+        <path d="M 50 -50 L 50 -20" />
+        <path d="M -50 20 L -50 65" />
+        <path d="M 50 20 L 50 65" />
+    </g>
+
+
+    <path d="M -100 -50 C -100 -85 100 -85 100 -50 C 100 -15 -100 -15 -100 -50 Z
+             M -80 -50 C -80 -25 80 -25 80 -50 C 80 -75 -80 -75 -80 -50 Z" 
+          fill="#F5F5F5" stroke="#757575" stroke-width="3" fill-rule="evenodd"/>
+
+
+    <g transform="translate(0, -200)">
+        <rect x="-100" y="30" width="200" height="15" fill="#8D6E63" stroke="#5D4037" stroke-width="2"/>
+        
+        <line x1="0" y1="45" x2="0" y2="120" stroke="#E6EE9C" stroke-width="4"/>
+
+        <path d="M -110 30 L 110 30 L 0 -50 Z" fill="#5D4037"/>
+
+        <path d="M -120 40 L 0 -60 L 120 40 L 120 30 L 0 -70 L -120 30 Z" 
+              fill="#D84315" stroke="#BF360C" stroke-width="2"/>
+              
+        <path d="M -110 30 L 0 -50 L 110 30" fill="none" stroke="#3E2723" stroke-width="2"/>
+    </g>
+
+  </g>
+</svg>

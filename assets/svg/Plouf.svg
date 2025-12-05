@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <g transform="translate(1200, 600)">
+    
+    <g opacity="0">
+       <ellipse cx="200" cy="0" rx="0" ry="0" fill="none" stroke="black" stroke-width="3">
+          <animate attributeName="rx" values="0; 60" dur="1s" begin="1.5s; 5.5s; 9.5s" />
+          <animate attributeName="ry" values="0; 20" dur="1s" begin="1.5s; 5.5s; 9.5s" />
+          <animate attributeName="opacity" values="1; 0" dur="1s" begin="1.5s; 5.5s; 9.5s" />
+       </ellipse>
+       
+       <ellipse cx="200" cy="0" rx="0" ry="0" fill="none" stroke="black" stroke-width="2">
+          <animate attributeName="rx" values="0; 40" dur="0.8s" begin="1.6s; 5.6s; 9.6s" />
+          <animate attributeName="ry" values="0; 15" dur="0.8s" begin="1.6s; 5.6s; 9.6s" />
+          <animate attributeName="opacity" values="1; 0" dur="0.8s" begin="1.6s; 5.6s; 9.6s" />
+       </ellipse>
+       
+       <animate attributeName="opacity" values="0;1;0" keyTimes="0;0.1;1" dur="1.5s" begin="1.5s; 5.5s; 9.5s" />
+    </g>
+    
+  </g>
+</svg>
