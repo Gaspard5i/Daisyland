@@ -8,12 +8,16 @@ import { MetricsBar } from './ui/MetricsBar.js';
 import { UserBar } from './ui/UserBar.js';
 import { CollectionScene } from './game/scenes/CollectionScene.js';
 import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
+import { initTooltip } from './ui/Tooltip.js';
 
 (async () => {
     const app = await createApp();
     mountApp(app, 'app');
 
     console.log('Pixi app started');
+
+    // Initialiser le système de tooltips en premier (nécessaire avant de créer les UI)
+    initTooltip(app.stage);
 
     // Initialiser les métriques du jeu
     const gameMetrics = new GameMetrics();

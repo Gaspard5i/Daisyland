@@ -5,6 +5,8 @@
 
 import { Container, Graphics, Text } from 'pixi.js';
 import { COLORS, FONTS } from '../utils/Constants.js';
+import { createWoodPanel } from './WoodStyle.js';
+import { addTooltip } from './Tooltip.js';
 
 export class MetricsBar extends Container {
   constructor() {
@@ -13,18 +15,22 @@ export class MetricsBar extends Container {
     // Configuration des couleurs et icônes pour chaque métrique
     this.metricConfig = {
       electricity: {
+        name: 'Électricité',
         color: 0xffdd00,
         icon: '⚡'
       },
       food: {
+        name: 'Nourriture',
         color: 0x00cc66,
         icon: '🥕'
       },
       waste: {
+        name: 'Déchets',
         color: 0xcc3333,
         icon: '🗑️'
       },
       wood: {
+        name: 'Bois',
         color: 0x8b4513,
         icon: '🪵'
       }
@@ -33,11 +39,13 @@ export class MetricsBar extends Container {
     // Les métriques seront initialisées par updateMetrics()
     this.metrics = {};
 
-    this.barWidth = 220;
-    this.barHeight = 28;
-    this.padding = 18;
-    this.spacing = 58;
-    this.iconSize = 20;
+    this.iconSize = 28;
+    this.barWidth = 170;
+    this.barHeight = 26;
+    this.paddingH = 22;  // Padding horizontal (gauche/droite)
+    this.paddingV = 32;  // Padding vertical (haut/bas)
+    this.spacing = 50;
+    this.iconBarGap = 12; // Espace entre icône et barre
 
     // Position sera mise à jour dans updatePosition()
     this._updatePosition();
@@ -49,7 +57,7 @@ export class MetricsBar extends Container {
   _updatePosition() {
     // Position en haut à droite
     const screenWidth = window.innerWidth;
-    this.position.set(screenWidth - this.barWidth - this.padding - 20, 20);
+    this.position.set(screenWidth - this.iconSize - this.iconBarGap - this.barWidth - this.paddingH - 20, 50);
   }
 
   createBackground() {
@@ -58,29 +66,20 @@ export class MetricsBar extends Container {
       this.removeChild(this.background);
     }
 
-    this.background = new Graphics();
-
-    // Calculer la hauteur basée sur le nombre de métriques
+    // Calculer les dimensions basées sur le nombre de métriques
     const metricsCount = Object.keys(this.metrics).length || 4;
-    const backgroundHeight = metricsCount * this.spacing + this.padding * 2;
+    const backgroundHeight = metricsCount * this.spacing + this.paddingV * 2 - (this.spacing - this.barHeight);
+    const backgroundWidth = this.iconSize + this.iconBarGap + this.barWidth + this.paddingH * 2;
 
-    // Fond semi-transparent
-    this.background.rect(
-      -this.padding,
-      -this.padding,
-      this.barWidth + this.padding * 2,
-      backgroundHeight
-    );
-    this.background.fill({ color: 0x000000, alpha: 0.8 });
-
-    // Bordure
-    this.background.rect(
-      -this.padding,
-      -this.padding,
-      this.barWidth + this.padding * 2,
-      backgroundHeight
-    );
-    this.background.stroke({ color: 0x444444, width: 2, alpha: 1 });
+    // Créer le fond en bois avec le composant partagé
+    this.background = createWoodPanel(backgroundWidth, backgroundHeight, {
+      showNails: true,
+      borderRadius: 10,
+      borderWidth: 4,
+    });
+    
+    // Positionner le background
+    this.background.position.set(-this.paddingH, -this.paddingV);
 
     // Ajouter le background en premier pour qu'il soit derrière les barres
     this.addChildAt(this.background, 0);
@@ -101,27 +100,35 @@ export class MetricsBar extends Container {
       const config = this.metricConfig[key] || { color: 0xffffff, icon: '?' };
       const y = index * this.spacing;
 
-      // Container pour cette barre
+      // Container pour cette ligne (icône + barre)
       const barContainer = new Container();
       barContainer.position.set(0, y);
 
-      // Texte du nom avec icône
-      const nameText = new Text({
-        text: `${config.icon} ${metric.name}`,
+      // Fond circulaire derrière l'icône pour la lisibilité
+      const iconBg = new Graphics();
+      const iconRadius = this.iconSize * 0.7;
+      iconBg.circle(this.iconSize / 2, this.barHeight / 2, iconRadius);
+      iconBg.fill({ color: 0x1a1a1a, alpha: 0.6 });
+      iconBg.stroke({ color: config.color, width: 2, alpha: 0.4 });
+      barContainer.addChild(iconBg);
+
+      // Icône à gauche
+      const iconText = new Text({
+        text: config.icon,
         style: {
-          fontFamily: FONTS.DEFAULT,
-          fontSize: FONTS.SIZES.SMALL + 2,
-          fill: 0xffffff,
-          align: 'left',
-          fontWeight: 'bold'
+          fontSize: this.iconSize * 0.75,
         }
       });
-      nameText.position.set(0, 0);
-      barContainer.addChild(nameText);
+      iconText.anchor.set(0.5, 0.5);
+      iconText.position.set(this.iconSize / 2, this.barHeight / 2);
+      barContainer.addChild(iconText);
 
-      // Conteneur de la barre
+      // Position X de la barre (après l'icône)
+      const barX = this.iconSize + this.iconBarGap;
+
+      // Fond de la barre
       const barBg = new Graphics();
-      barBg.rect(0, 20, this.barWidth, this.barHeight);
+      barBg.roundRect(barX, 0, this.barWidth, this.barHeight, 4);
       barBg.fill({ color: 0x222222 });
       barBg.stroke({ color: 0x555555, width: 1 });
       barContainer.addChild(barBg);
@@ -130,25 +137,13 @@ export class MetricsBar extends Container {
       const progressBar = new Graphics();
       barContainer.addChild(progressBar);
 
-      // Texte de la valeur (centré dans la barre)
-      const valueText = new Text({
-        text: '',
-        style: {
-          fontFamily: FONTS.DEFAULT,
-          fontSize: FONTS.SIZES.SMALL,
-          fill: 0xffffff,
-          align: 'center',
-          fontWeight: 'bold'
-        }
-      });
-      valueText.anchor.set(0.5, 0.5);
-      valueText.position.set(this.barWidth / 2, 20 + this.barHeight / 2);
-      barContainer.addChild(valueText);
+      // Ajouter tooltip au survol
+      addTooltip(barContainer, () => `${config.name}: ${this.metrics[key].actualValue}/${this.metrics[key].maxValue}`);
 
       this.bars[key] = {
         container: barContainer,
         progressBar: progressBar,
-        valueText: valueText
+        barX: barX,
       };
 
       this.addChild(barContainer);
@@ -183,17 +178,14 @@ export class MetricsBar extends Container {
           fillColor = 0xffaa44; // Orange pour valeurs moyennes-basses
         }
 
-        // Barre de progression principale
-        bar.progressBar.rect(0, 20, fillWidth, this.barHeight);
-        bar.progressBar.fill({ color: fillColor, alpha: 0.8 });
+        // Barre de progression principale (position après l'icône)
+        bar.progressBar.roundRect(bar.barX, 0, fillWidth, this.barHeight, 4);
+        bar.progressBar.fill({ color: fillColor, alpha: 0.9 });
 
         // Effet de brillance
-        bar.progressBar.rect(0, 20, fillWidth, this.barHeight / 3);
-        bar.progressBar.fill({ color: fillColor, alpha: 0.3 });
+        bar.progressBar.roundRect(bar.barX, 0, fillWidth, this.barHeight / 3, 4);
+        bar.progressBar.fill({ color: 0xffffff, alpha: 0.2 });
       }
-
-      // Mettre à jour le texte de valeur
-      bar.valueText.text = `${Math.round(metric.actualValue)} / ${metric.maxValue}`;
     });
   }
 

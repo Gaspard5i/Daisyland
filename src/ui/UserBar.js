@@ -6,6 +6,7 @@
 
 import { Container, Graphics, Text, Sprite, Assets } from 'pixi.js';
 import { FONTS } from '../utils/Constants.js';
+import { createWoodPanel } from './WoodStyle.js';
 
 // Liste des avatars disponibles
 const AVATARS = [
@@ -59,63 +60,6 @@ export class UserBar extends Container {
   }
 
   /**
-   * Crée une pancarte en bois
-   */
-  _createWoodSign(width, height) {
-    const woodSign = new Container();
-
-    // Fond principal bois
-    const woodBase = new Graphics();
-    woodBase.roundRect(0, 0, width, height, 8);
-    woodBase.fill({ color: 0xC4A35A });
-    woodSign.addChild(woodBase);
-
-    // Planches horizontales
-    const plankLines = new Graphics();
-    const plankColors = [0xD4B76A, 0xB89545, 0xC4A35A, 0xA8883A];
-    const plankHeight = height / 4;
-    for (let i = 0; i < 4; i++) {
-      plankLines.roundRect(2, i * plankHeight + 1, width - 4, plankHeight - 2, 3);
-      plankLines.fill({ color: plankColors[i] });
-    }
-    woodSign.addChild(plankLines);
-
-    // Lignes de grain
-    const grainLines = new Graphics();
-    for (let i = 0; i < 5; i++) {
-      const y = 6 + i * (height / 5);
-      grainLines.moveTo(8, y);
-      grainLines.lineTo(width - 8, y + (i % 2 === 0 ? 2 : -2));
-      grainLines.stroke({ color: 0x8B7340, width: 1, alpha: 0.3 });
-    }
-    woodSign.addChild(grainLines);
-
-    // Bordure
-    const woodBorder = new Graphics();
-    woodBorder.roundRect(0, 0, width, height, 8);
-    woodBorder.stroke({ color: 0x7A6030, width: 4 });
-    woodSign.addChild(woodBorder);
-
-    // Clous
-    const nailPositions = [
-      { x: 10, y: 10 },
-      { x: width - 10, y: 10 },
-      { x: 10, y: height - 10 },
-      { x: width - 10, y: height - 10 },
-    ];
-    nailPositions.forEach(pos => {
-      const nail = new Graphics();
-      nail.circle(pos.x, pos.y, 4);
-      nail.fill({ color: 0x3D3D3D });
-      nail.circle(pos.x - 1, pos.y - 1, 2);
-      nail.fill({ color: 0x6D6D6D });
-      woodSign.addChild(nail);
-    });
-
-    return woodSign;
-  }
-
-  /**
    * Crée tous les éléments visuels
    */
   async _createElements() {
@@ -149,7 +93,7 @@ export class UserBar extends Container {
     
     // Position de la pancarte : commence au centre de l'avatar
     const sign1X = this.padding + iconOverlap1;
-    const sign1 = this._createWoodSign(sign1Width, this.sign1Height);
+    const sign1 = createWoodPanel(sign1Width, this.sign1Height);
     sign1.position.set(sign1X, row1CenterY - this.sign1Height / 2);
     this.addChild(sign1);
 
@@ -202,7 +146,7 @@ export class UserBar extends Container {
     
     // Position de la pancarte : commence au centre de la fleur
     const sign2X = this.padding + iconOverlap2;
-    const sign2 = this._createWoodSign(sign2Width, this.sign2Height);
+    const sign2 = createWoodPanel(sign2Width, this.sign2Height);
     sign2.position.set(sign2X, row2CenterY - this.sign2Height / 2);
     this.addChild(sign2);
 
