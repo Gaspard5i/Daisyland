@@ -10,13 +10,15 @@ export class MiniGameScene extends PIXI.Container {
   /**
    * @param {PIXI.Application} app - L'application PixiJS
    * @param {Function} onBack - Callback pour retourner à la carte
+   * @param {GameMetrics} gameMetrics - Instance des métriques du jeu
    */
-  constructor(app, onBack) {
+  constructor(app, onBack, gameMetrics) {
     super();
     
     this.app = app;
     this.onBack = onBack;
-    
+    this.gameMetrics = gameMetrics;
+
     // Fond
     this.bg = new PIXI.Graphics();
     this.addChild(this.bg);
@@ -30,7 +32,7 @@ export class MiniGameScene extends PIXI.Container {
     this.title.x = 20;
     this.title.y = 20;
     this.addChild(this.title);
-    
+
     // Description
     this.description = new PIXI.Text('Ceci est un mini-jeu placeholder. Cliquez sur RETOUR pour revenir à la carte.', {
       fontFamily: FONTS.DEFAULT,
@@ -122,6 +124,8 @@ export class MiniGameScene extends PIXI.Container {
     // Ajouter du contenu spécifique selon l'ID
     if (id === 'farm-1') {
       this._createGuessNumberGame();
+    } else if (id === 'farm-2') {
+      this._createElectricityGame();
     }
     
     this._drawBackground();
@@ -235,6 +239,126 @@ export class MiniGameScene extends PIXI.Container {
     this.gameContent.addChild(replayBtn);
   }
   
+  /**
+   * Crée le mini-jeu d'électricité - cliquer pour générer de l'énergie
+   */
+  _createElectricityGame() {
+    // Variables du jeu - utiliser les métriques existantes
+    let electricityLevel = this.gameMetrics ? this.gameMetrics.getMetric('electricity') : 0;
+    let clickPower = 1;
+    let isGenerating = false;
+
+    // Titre du jeu
+    const gameTitle = new PIXI.Text('🔋 Générateur d\'Électricité', {
+      fontFamily: FONTS.DEFAULT,
+      fontSize: FONTS.SIZES.SUBTITLE,
+      fill: 0xffff00,
+    });
+    gameTitle.x = 20;
+    this.gameContent.addChild(gameTitle);
+
+    // Compteur d'électricité
+    const electricityCounter = new PIXI.Text(`⚡ Électricité: ${electricityLevel} kWh`, {
+      fontFamily: FONTS.DEFAULT,
+      fontSize: FONTS.SIZES.BODY,
+      fill: 0x00ff00,
+    });
+    electricityCounter.x = 20;
+    electricityCounter.y = 40;
+    this.gameContent.addChild(electricityCounter);
+
+    // Créer l'icône de générateur (éclair dans un cercle)
+    const generatorIcon = new PIXI.Container();
+    generatorIcon.x = this.app.renderer.width / 2 - 60;
+    generatorIcon.y = 150;
+
+    // Fond du générateur
+    const iconBg = new PIXI.Graphics();
+    iconBg.beginFill(0x2c3e50);
+    iconBg.lineStyle(4, 0xffff00, 1);
+    iconBg.drawCircle(60, 60, 50);
+    iconBg.endFill();
+    generatorIcon.addChild(iconBg);
+
+    // Éclair ⚡
+    const lightning = new PIXI.Text('⚡', {
+      fontFamily: 'Arial',
+      fontSize: 48,
+      fill: 0xffff00,
+    });
+    lightning.anchor.set(0.5);
+    lightning.x = 60;
+    lightning.y = 60;
+    generatorIcon.addChild(lightning);
+
+    // Effet de clic (cercle qui s'agrandit)
+    const clickEffect = new PIXI.Graphics();
+    generatorIcon.addChild(clickEffect);
+
+    generatorIcon.eventMode = 'static';
+    generatorIcon.cursor = 'pointer';
+
+    // Animation de l'effet de clic
+    const animateClick = () => {
+      clickEffect.clear();
+      clickEffect.beginFill(0xffff00, 0.3);
+      clickEffect.drawCircle(60, 60, 50);
+      clickEffect.endFill();
+
+      // Animation d'expansion et de fade
+      const startTime = Date.now();
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = elapsed / 300; // 300ms d'animation
+
+        if (progress < 1) {
+          const scale = 1 + progress * 0.5;
+          const alpha = 1 - progress;
+
+          clickEffect.scale.set(scale);
+          clickEffect.alpha = alpha;
+
+          requestAnimationFrame(animate);
+        } else {
+          clickEffect.clear();
+          clickEffect.scale.set(1);
+          clickEffect.alpha = 1;
+        }
+      };
+      animate();
+    };
+
+    // Gestionnaire de clic
+    generatorIcon.on('pointerdown', () => {
+      if (!isGenerating) {
+        isGenerating = true;
+
+        // Générer de l'électricité
+        electricityLevel += clickPower;
+
+        // Mettre à jour les métriques du jeu
+        if (this.gameMetrics) {
+          this.gameMetrics.addToMetric('electricity', clickPower);
+          electricityLevel = this.gameMetrics.getMetric('electricity');
+        }
+
+        electricityCounter.text = `⚡ Électricité: ${electricityLevel} kWh`;
+
+        // Animation de l'icône
+        animateClick();
+
+        // Animation de l'éclair
+        lightning.scale.set(1.2);
+        setTimeout(() => {
+          lightning.scale.set(1);
+          isGenerating = false;
+        }, 100);
+      }
+    });
+
+    this.gameContent.addChild(generatorIcon);
+  }
+
   /**
    * Gère le resize
    */

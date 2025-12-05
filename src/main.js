@@ -48,7 +48,7 @@ import { initTooltip } from './ui/Tooltip.js';
       if (currentScene) {
         currentScene.show();
       }
-    });
+    }, gameMetrics);
 
     // Créer la scène de collecte de déchets (overlay)
     const collectionScene = new CollectionScene(app, () => {
