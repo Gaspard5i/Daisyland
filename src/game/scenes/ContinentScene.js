@@ -266,16 +266,10 @@ export class ContinentScene extends PIXI.Container {
   _createLocations() {
     this.buttons = [];
     
-    // Bouton retour à l'île principale (à droite, symétrique au bouton 8ème Continent sur FarmScene)
-    const backBtn = new Button({
-      label: 'Île Principale',
-      x: CONTINENT_ZONES.OCEAN.X + CONTINENT_ZONES.OCEAN.WIDTH - MARGINS.WATER / 2,
-      y: CONTINENT_ZONES.OCEAN.Y + CONTINENT_ZONES.OCEAN.HEIGHT * 0.5,
-      onClick: () => this._navigateBack(),
-      showMarker: true,
-    });
-    this.mapContainer.addChild(backBtn);
-    this.buttons.push(backBtn);
+    // Bateau retour à l'île principale (à droite, sens inverse)
+    const boatX = CONTINENT_ZONES.OCEAN.X + CONTINENT_ZONES.OCEAN.WIDTH - MARGINS.WATER / 2;
+    const boatY = CONTINENT_ZONES.OCEAN.Y + CONTINENT_ZONES.OCEAN.HEIGHT * 0.5;
+    this._createBoatToMainIsland(boatX, boatY);
     
     // Zones de collecte uniquement
     const collectionZones = [
@@ -328,6 +322,51 @@ export class ContinentScene extends PIXI.Container {
   _navigateBack() {
     if (this.onNavigate) {
       this.onNavigate('farm');
+    }
+  }
+
+  /**
+   * Crée le bateau pour retourner à l'île principale (sens inverse)
+   */
+  async _createBoatToMainIsland(x, y) {
+    try {
+      const texture = await PIXI.Assets.load('/assets/svg/Boat.svg');
+      const boat = new PIXI.Sprite(texture);
+      
+      // Taille et position
+      const targetSize = 150;
+      const scaleX = targetSize / texture.width;
+      const scaleY = targetSize / texture.height;
+      boat.scale.set(-scaleX, scaleY); // Négatif en X pour retourner le bateau
+      boat.anchor.set(0.5, 0.5);
+      boat.x = x;
+      boat.y = y;
+      
+      // Sauvegarder l'échelle de base
+      const baseScale = scaleX;
+      
+      // Interactivité
+      boat.eventMode = 'static';
+      boat.cursor = 'pointer';
+      
+      // Animation au survol
+      boat.on('pointerenter', () => {
+        boat.scale.set(-baseScale * 1.15, baseScale * 1.15);
+      });
+      
+      boat.on('pointerleave', () => {
+        boat.scale.set(-baseScale, baseScale);
+      });
+      
+      // Clic = retour à l'île principale
+      boat.on('pointerdown', () => {
+        this._navigateBack();
+      });
+      
+      this.mapContainer.addChild(boat);
+      console.log('🚤 Bateau retour créé');
+    } catch (err) {
+      console.error('Erreur chargement Boat.svg:', err);
     }
   }
   

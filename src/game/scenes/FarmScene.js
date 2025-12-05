@@ -227,11 +227,10 @@ export class FarmScene extends PIXI.Container {
       }
     }
     
-    // Boutons sur l'EAU
+    // Boutons sur l'EAU (sans 8ème continent qui est remplacé par le bateau)
     const waterLocations = [
       { x: ZONES.WATER.X + ZONES.WATER.WIDTH * 0.3, y: ZONES.WATER.Y + MARGINS.WATER / 2 + 20, name: 'Île Nord-Ouest', id: 'island-nw' },
       { x: ZONES.WATER.X + ZONES.WATER.WIDTH * 0.7, y: ZONES.WATER.Y + MARGINS.WATER / 2 + 20, name: 'Île Nord-Est', id: 'island-ne' },
-      { x: ZONES.WATER.X + MARGINS.WATER / 2, y: ZONES.WATER.Y + ZONES.WATER.HEIGHT * 0.5, name: '8ème Continent', id: '8eme-continent' },
       { x: ZONES.WATER.X + ZONES.WATER.WIDTH - MARGINS.WATER / 2, y: ZONES.WATER.Y + ZONES.WATER.HEIGHT * 0.5, name: 'Port Est', id: 'port-east' },
       { x: ZONES.WATER.X + ZONES.WATER.WIDTH * 0.3, y: ZONES.WATER.Y + ZONES.WATER.HEIGHT - MARGINS.WATER / 2 - 20, name: 'Île Sud-Ouest', id: 'island-sw' },
       { x: ZONES.WATER.X + ZONES.WATER.WIDTH * 0.7, y: ZONES.WATER.Y + ZONES.WATER.HEIGHT - MARGINS.WATER / 2 - 20, name: 'Île Sud-Est', id: 'island-se' },
@@ -249,6 +248,14 @@ export class FarmScene extends PIXI.Container {
       this.mapContainer.addChild(btn);
       this.buttons.push(btn);
     });
+    
+    // Bateau pour aller au 8ème continent (à la place du bouton)
+    const boatX = ZONES.WATER.X + MARGINS.WATER / 2;
+    const boatY = ZONES.WATER.Y + ZONES.WATER.HEIGHT * 0.5;
+    this._createBoatTo8eContinent(boatX, boatY);
+    
+    // Ajouter le pont (bridge) en bas milieu-droite de l'île
+    this._createBridgeButton();
   }
 
   /**
@@ -300,6 +307,129 @@ export class FarmScene extends PIXI.Container {
       console.log('🚲 Vélo créé');
     } catch (err) {
       console.error('Erreur chargement bike.svg:', err);
+    }
+  }
+
+  /**
+   * Crée le bateau pour aller au 8ème continent
+   */
+  async _createBoatTo8eContinent(x, y) {
+    try {
+      const texture = await PIXI.Assets.load('/assets/svg/Boat.svg');
+      const boat = new PIXI.Sprite(texture);
+      
+      // Taille et position
+      const targetSize = 150;
+      const scaleX = targetSize / texture.width;
+      const scaleY = targetSize / texture.height;
+      boat.scale.set(scaleX, scaleY);
+      boat.anchor.set(0.5, 0.5);
+      boat.x = x;
+      boat.y = y;
+      
+      // Sauvegarder l'échelle de base
+      const baseScale = scaleX;
+      
+      // Interactivité
+      boat.eventMode = 'static';
+      boat.cursor = 'pointer';
+      
+      // Animation au survol
+      boat.on('pointerenter', () => {
+        boat.scale.set(baseScale * 1.15);
+      });
+      
+      boat.on('pointerleave', () => {
+        boat.scale.set(baseScale);
+      });
+      
+      // Clic = aller au 8ème continent
+      boat.on('pointerdown', () => {
+        this._openLocation('8eme-continent', '8ème Continent');
+      });
+      
+      this.mapContainer.addChild(boat);
+      console.log('🚤 Bateau vers 8ème Continent créé');
+    } catch (err) {
+      console.error('Erreur chargement Boat.svg:', err);
+    }
+  }
+
+  /**
+   * Crée le pont (bridge) - élément décoratif non cliquable
+   */
+  async _createBridgeButton() {
+    try {
+      const texture = await PIXI.Assets.load('/assets/svg/Bridge.svg');
+      const bridge = new PIXI.Sprite(texture);
+      
+      // Taille et position - plus grand, plus à droite et plus haut
+      const targetSize = 150;
+      const scaleX = targetSize / texture.width;
+      const scaleY = targetSize / texture.height;
+      bridge.scale.set(scaleX, scaleY);
+      bridge.anchor.set(0.5, 0.5);
+      
+      // Position: droite de l'île, plus haut
+      const bridgeX = ZONES.LAND.X + ZONES.LAND.WIDTH * 0.8;
+      const bridgeY = ZONES.LAND.Y + ZONES.LAND.HEIGHT * 0.6;
+      bridge.x = bridgeX;
+      bridge.y = bridgeY;
+      
+      this.mapContainer.addChild(bridge);
+      console.log('🌉 Pont créé');
+      
+      // Ajouter le pêcheur sur le pont
+      this._createFishermanButton(bridgeX, bridgeY);
+    } catch (err) {
+      console.error('Erreur chargement Bridge.svg:', err);
+    }
+  }
+
+  /**
+   * Crée le pêcheur (fisherman) cliquable sur le pont
+   */
+  async _createFishermanButton(bridgeX, bridgeY) {
+    try {
+      const texture = await PIXI.Assets.load('/assets/svg/Fisherman.svg');
+      const fisherman = new PIXI.Sprite(texture);
+      
+      // Taille
+      const targetSize = 50;
+      const scaleX = targetSize / texture.width;
+      const scaleY = targetSize / texture.height;
+      fisherman.scale.set(scaleX, scaleY);
+      fisherman.anchor.set(0.3, 0.9);
+      
+      // Position: sur le pont
+      fisherman.x = bridgeX;
+      fisherman.y = bridgeY;
+      
+      // Sauvegarder l'échelle de base
+      const baseScale = scaleX;
+      
+      // Interactivité
+      fisherman.eventMode = 'static';
+      fisherman.cursor = 'pointer';
+      
+      // Animation au survol
+      fisherman.on('pointerenter', () => {
+        fisherman.scale.set(baseScale * 1.15);
+      });
+      
+      fisherman.on('pointerleave', () => {
+        fisherman.scale.set(baseScale);
+      });
+      
+      // Clic = ouvrir le lieu pêcheur
+      fisherman.on('pointerdown', () => {
+        this._openLocation('fisherman', 'Pêcheur');
+      });
+      
+      this.mapContainer.addChild(fisherman);
+      console.log('🎣 Pêcheur créé');
+    } catch (err) {
+      console.error('Erreur chargement Fisherman.svg:', err);
     }
   }
   
