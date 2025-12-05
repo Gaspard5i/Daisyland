@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <g id="fish">
+      <ellipse cx="0" cy="0" rx="20" ry="10" fill="#FF9800" />
+      <path d="M-15 0 L -30 -10 L -30 10 Z" fill="#F57C00" />
+      <circle cx="10" cy="-3" r="2" fill="white" />
+      <circle cx="11" cy="-3" r="1" fill="black" />
+    </g>
+  </defs>
+
+  <g transform="translate(1200, 600)">
+    <g>
+      <use href="#fish" transform="scale(1.5)">
+         <animateMotion path="M 0 0 Q 100 -250 200 0" dur="1.5s" begin="0s; 4s; 8s" fill="freeze" rotate="auto" />
+         
+         <animate attributeName="opacity" values="1; 1; 0" keyTimes="0; 0.99; 1" dur="1.5s" begin="0s; 4s; 8s" fill="freeze" />
+      </use>
+    </g>
+  </g>
+</svg>
