@@ -8,6 +8,7 @@ import { MetricsBar } from './ui/MetricsBar.js';
 import { UserBar } from './ui/UserBar.js';
 import { CollectionScene } from './game/scenes/CollectionScene.js';
 import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
+import { WasteManager } from './game/systems/WasteManager.js';
 import { initTooltip } from './ui/Tooltip.js';
 
 (async () => {
@@ -27,6 +28,10 @@ import { initTooltip } from './ui/Tooltip.js';
       metricsBar.updateMetrics(metrics);
     });
     metricsBar.updateMetrics(gameMetrics.getAllMetrics());
+
+    WasteManager.addListener((totalWaste, wasteByType) => {
+      gameMetrics.setMetric('waste', totalWaste);
+    });
 
     // Démarrer le système de remplissage passif des zones de collecte
     CollectionZoneManager.start();
