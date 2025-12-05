@@ -6,6 +6,21 @@ export function startGame(app) {
   const MAP_WIDTH = 1600;  // Largeur de la map
   const MAP_HEIGHT = 1200; // Hauteur de la map
   
+  // Configuration des zones de la map
+  const CLOUD_MARGIN = 80;   // Épaisseur des nuages (blanc)
+  const WATER_MARGIN = 120;  // Épaisseur de l'eau (bleu)
+  
+  // Zones calculées
+  const WATER_X = CLOUD_MARGIN;
+  const WATER_Y = CLOUD_MARGIN;
+  const WATER_WIDTH = MAP_WIDTH - CLOUD_MARGIN * 2;
+  const WATER_HEIGHT = MAP_HEIGHT - CLOUD_MARGIN * 2;
+  
+  const LAND_X = CLOUD_MARGIN + WATER_MARGIN;
+  const LAND_Y = CLOUD_MARGIN + WATER_MARGIN;
+  const LAND_WIDTH = MAP_WIDTH - (CLOUD_MARGIN + WATER_MARGIN) * 2;
+  const LAND_HEIGHT = MAP_HEIGHT - (CLOUD_MARGIN + WATER_MARGIN) * 2;
+  
   // Containers
   const mapContainer = new PIXI.Container();
   const uiContainer = new PIXI.Container();
@@ -15,36 +30,89 @@ export function startGame(app) {
   const inputManager = new InputManager(app, mapContainer);
   inputManager.setMapSize(MAP_WIDTH, MAP_HEIGHT);
 
-  // Background (the "map") - maintenant plus grand que l'écran
+  // Background (the "map") - avec couches nuages → eau → terre
   const bg = new PIXI.Graphics();
   function drawBackground() {
     bg.clear();
     
-    // Fond principal de la map
-    bg.beginFill(0x66cc66); // greenish map
+    // 1. Nuages (blanc) - Couche extérieure (limites de la map)
+    bg.beginFill(0xf0f0f0);
     bg.drawRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
     bg.endFill();
     
-    // Dessiner une grille pour visualiser le déplacement
-    bg.lineStyle(1, 0x55aa55, 0.5);
-    const gridSize = 100;
-    for (let x = 0; x <= MAP_WIDTH; x += gridSize) {
-      bg.moveTo(x, 0);
-      bg.lineTo(x, MAP_HEIGHT);
-    }
-    for (let y = 0; y <= MAP_HEIGHT; y += gridSize) {
-      bg.moveTo(0, y);
-      bg.lineTo(MAP_WIDTH, y);
-    }
+    // Dessiner des nuages décoratifs sur les bords
+    bg.beginFill(0xffffff);
+    const cloudPositions = [
+      { x: 40, y: 40 }, { x: 120, y: 30 }, { x: 200, y: 50 },
+      { x: MAP_WIDTH - 40, y: 40 }, { x: MAP_WIDTH - 120, y: 60 },
+      { x: 40, y: MAP_HEIGHT - 40 }, { x: 150, y: MAP_HEIGHT - 50 },
+      { x: MAP_WIDTH - 60, y: MAP_HEIGHT - 40 }, { x: MAP_WIDTH - 150, y: MAP_HEIGHT - 30 },
+      { x: 30, y: 200 }, { x: 50, y: 400 }, { x: 40, y: 600 },
+      { x: MAP_WIDTH - 30, y: 250 }, { x: MAP_WIDTH - 50, y: 500 }, { x: MAP_WIDTH - 40, y: 750 },
+    ];
+    cloudPositions.forEach(pos => {
+      bg.drawCircle(pos.x, pos.y, 25 + Math.random() * 15);
+      bg.drawCircle(pos.x + 20, pos.y - 10, 20 + Math.random() * 10);
+      bg.drawCircle(pos.x - 15, pos.y + 5, 18 + Math.random() * 10);
+    });
+    bg.endFill();
     
-    // Ajouter quelques éléments décoratifs pour montrer l'étendue de la map
+    // 2. Eau (bleu) - Couche intermédiaire
+    bg.beginFill(0x4499dd);
+    bg.drawRoundedRect(WATER_X, WATER_Y, WATER_WIDTH, WATER_HEIGHT, 20);
+    bg.endFill();
+    
+    // Vagues décoratives sur l'eau
+    bg.lineStyle(2, 0x66bbee, 0.5);
+    for (let i = 0; i < 8; i++) {
+      const waveY = WATER_Y + 30 + i * 40;
+      if (waveY < LAND_Y - 10) {
+        bg.moveTo(WATER_X + 20, waveY);
+        for (let x = WATER_X + 20; x < WATER_X + WATER_WIDTH - 20; x += 30) {
+          bg.quadraticCurveTo(x + 15, waveY - 8, x + 30, waveY);
+        }
+      }
+    }
+    // Vagues en bas
+    for (let i = 0; i < 5; i++) {
+      const waveY = LAND_Y + LAND_HEIGHT + 20 + i * 25;
+      if (waveY < WATER_Y + WATER_HEIGHT - 10) {
+        bg.moveTo(WATER_X + 20, waveY);
+        for (let x = WATER_X + 20; x < WATER_X + WATER_WIDTH - 20; x += 30) {
+          bg.quadraticCurveTo(x + 15, waveY - 8, x + 30, waveY);
+        }
+      }
+    }
     bg.lineStyle(0);
-    bg.beginFill(0x558855);
-    // Coins de la map
-    bg.drawCircle(50, 50, 30);
-    bg.drawCircle(MAP_WIDTH - 50, 50, 30);
-    bg.drawCircle(50, MAP_HEIGHT - 50, 30);
-    bg.drawCircle(MAP_WIDTH - 50, MAP_HEIGHT - 50, 30);
+    
+    // 3. Terre (vert) - Couche centrale
+    bg.beginFill(0x66cc66);
+    bg.drawRoundedRect(LAND_X, LAND_Y, LAND_WIDTH, LAND_HEIGHT, 30);
+    bg.endFill();
+    
+    // Herbe décorative sur la terre
+    bg.beginFill(0x55aa55);
+    for (let i = 0; i < 30; i++) {
+      const gx = LAND_X + 50 + Math.random() * (LAND_WIDTH - 100);
+      const gy = LAND_Y + 50 + Math.random() * (LAND_HEIGHT - 100);
+      bg.drawCircle(gx, gy, 8 + Math.random() * 12);
+    }
+    bg.endFill();
+    
+    // Quelques arbres/buissons
+    bg.beginFill(0x338833);
+    const treePositions = [
+      { x: LAND_X + 80, y: LAND_Y + 80 },
+      { x: LAND_X + LAND_WIDTH - 80, y: LAND_Y + 100 },
+      { x: LAND_X + 100, y: LAND_Y + LAND_HEIGHT - 100 },
+      { x: LAND_X + LAND_WIDTH - 100, y: LAND_Y + LAND_HEIGHT - 80 },
+      { x: LAND_X + LAND_WIDTH / 2, y: LAND_Y + 60 },
+    ];
+    treePositions.forEach(pos => {
+      bg.drawCircle(pos.x, pos.y, 20);
+      bg.drawCircle(pos.x + 15, pos.y + 8, 15);
+      bg.drawCircle(pos.x - 12, pos.y + 5, 18);
+    });
     bg.endFill();
   }
   drawBackground();
@@ -98,19 +166,39 @@ export function startGame(app) {
     return btn;
   }
 
-  // Create several buttons spread across the map (now using MAP dimensions)
+  // Créer les boutons répartis sur la terre et l'eau
   const buttons = [];
-  const margin = 120;
-  const cols = 4;  // Plus de colonnes pour une plus grande map
-  const rows = 3;  // Plus de lignes
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const x = margin + c * ((MAP_WIDTH - margin * 2) / (cols - 1 || 1));
-      const y = 140 + r * ((MAP_HEIGHT - 200) / (rows - 1 || 1));
-      const index = r * cols + c + 1;
-      buttons.push(createMapButton(x, y, `Mini-jeu ${index}`, `minigame-${index}`));
+  
+  // Boutons sur la TERRE (centre) - 6 boutons en grille 3x2
+  const landMargin = 100;
+  const landCols = 3;
+  const landRows = 2;
+  for (let r = 0; r < landRows; r++) {
+    for (let c = 0; c < landCols; c++) {
+      const x = LAND_X + landMargin + c * ((LAND_WIDTH - landMargin * 2) / (landCols - 1 || 1));
+      const y = LAND_Y + landMargin + r * ((LAND_HEIGHT - landMargin * 2) / (landRows - 1 || 1));
+      const index = r * landCols + c + 1;
+      buttons.push(createMapButton(x, y, `Ferme ${index}`, `farm-${index}`));
     }
   }
+  
+  // Boutons sur l'EAU - 6 boutons autour de la terre
+  const waterButtons = [
+    // Haut
+    { x: WATER_X + WATER_WIDTH * 0.3, y: WATER_Y + WATER_MARGIN / 2 + 20, name: 'Île Nord-Ouest', id: 'island-nw' },
+    { x: WATER_X + WATER_WIDTH * 0.7, y: WATER_Y + WATER_MARGIN / 2 + 20, name: 'Île Nord-Est', id: 'island-ne' },
+    // Gauche
+    { x: WATER_X + WATER_MARGIN / 2, y: WATER_Y + WATER_HEIGHT * 0.5, name: 'Port Ouest', id: 'port-west' },
+    // Droite
+    { x: WATER_X + WATER_WIDTH - WATER_MARGIN / 2, y: WATER_Y + WATER_HEIGHT * 0.5, name: 'Port Est', id: 'port-east' },
+    // Bas
+    { x: WATER_X + WATER_WIDTH * 0.3, y: WATER_Y + WATER_HEIGHT - WATER_MARGIN / 2 - 20, name: 'Île Sud-Ouest', id: 'island-sw' },
+    { x: WATER_X + WATER_WIDTH * 0.7, y: WATER_Y + WATER_HEIGHT - WATER_MARGIN / 2 - 20, name: 'Île Sud-Est', id: 'island-se' },
+  ];
+  
+  waterButtons.forEach(wb => {
+    buttons.push(createMapButton(wb.x, wb.y, wb.name, wb.id));
+  });
 
   // mini-game launcher (placeholder)
   function openMiniGame(id, name) {
