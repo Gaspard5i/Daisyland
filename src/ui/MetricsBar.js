@@ -33,14 +33,23 @@ export class MetricsBar extends Container {
     // Les métriques seront initialisées par updateMetrics()
     this.metrics = {};
 
-    this.barWidth = 180;
-    this.barHeight = 22;
-    this.padding = 15;
-    this.spacing = 50;
-    this.iconSize = 16;
+    this.barWidth = 220;
+    this.barHeight = 28;
+    this.padding = 18;
+    this.spacing = 58;
+    this.iconSize = 20;
 
-    // Le background sera créé quand les métriques seront définies
-    this.position.set(20, 20); // Position en haut à gauche
+    // Position sera mise à jour dans updatePosition()
+    this._updatePosition();
+    
+    // Écouter le resize pour repositionner
+    window.addEventListener('resize', () => this._updatePosition());
+  }
+
+  _updatePosition() {
+    // Position en haut à droite
+    const screenWidth = window.innerWidth;
+    this.position.set(screenWidth - this.barWidth - this.padding - 20, 20);
   }
 
   createBackground() {
@@ -101,7 +110,7 @@ export class MetricsBar extends Container {
         text: `${config.icon} ${metric.name}`,
         style: {
           fontFamily: FONTS.DEFAULT,
-          fontSize: FONTS.SIZES.SMALL,
+          fontSize: FONTS.SIZES.SMALL + 2,
           fill: 0xffffff,
           align: 'left',
           fontWeight: 'bold'
@@ -112,7 +121,7 @@ export class MetricsBar extends Container {
 
       // Conteneur de la barre
       const barBg = new Graphics();
-      barBg.rect(0, 16, this.barWidth, this.barHeight);
+      barBg.rect(0, 20, this.barWidth, this.barHeight);
       barBg.fill({ color: 0x222222 });
       barBg.stroke({ color: 0x555555, width: 1 });
       barContainer.addChild(barBg);
@@ -126,35 +135,20 @@ export class MetricsBar extends Container {
         text: '',
         style: {
           fontFamily: FONTS.DEFAULT,
-          fontSize: FONTS.SIZES.SMALL - 2,
+          fontSize: FONTS.SIZES.SMALL,
           fill: 0xffffff,
           align: 'center',
           fontWeight: 'bold'
         }
       });
       valueText.anchor.set(0.5, 0.5);
-      valueText.position.set(this.barWidth / 2, 16 + this.barHeight / 2);
+      valueText.position.set(this.barWidth / 2, 20 + this.barHeight / 2);
       barContainer.addChild(valueText);
-
-      // Indicateur de niveau (optionnel)
-      const levelText = new Text({
-        text: '',
-        style: {
-          fontFamily: FONTS.DEFAULT,
-          fontSize: FONTS.SIZES.SMALL - 4,
-          fill: 0xaaaaaa,
-          align: 'right'
-        }
-      });
-      levelText.anchor.set(1, 0);
-      levelText.position.set(this.barWidth, 0);
-      barContainer.addChild(levelText);
 
       this.bars[key] = {
         container: barContainer,
         progressBar: progressBar,
-        valueText: valueText,
-        levelText: levelText
+        valueText: valueText
       };
 
       this.addChild(barContainer);
@@ -190,23 +184,16 @@ export class MetricsBar extends Container {
         }
 
         // Barre de progression principale
-        bar.progressBar.rect(0, 16, fillWidth, this.barHeight);
+        bar.progressBar.rect(0, 20, fillWidth, this.barHeight);
         bar.progressBar.fill({ color: fillColor, alpha: 0.8 });
 
         // Effet de brillance
-        bar.progressBar.rect(0, 16, fillWidth, this.barHeight / 3);
+        bar.progressBar.rect(0, 20, fillWidth, this.barHeight / 3);
         bar.progressBar.fill({ color: fillColor, alpha: 0.3 });
       }
 
       // Mettre à jour le texte de valeur
-      bar.valueText.text = `${Math.round(metric.actualValue)}/${metric.maxValue}`;
-
-      // Mettre à jour le niveau si défini
-      if (metric.level !== undefined) {
-        bar.levelText.text = `Niv. ${metric.level}`;
-      } else {
-        bar.levelText.text = '';
-      }
+      bar.valueText.text = `${Math.round(metric.actualValue)} / ${metric.maxValue}`;
     });
   }
 
