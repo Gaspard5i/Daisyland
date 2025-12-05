@@ -3,15 +3,27 @@ import { SceneManager } from './core/SceneManager.js';
 import { FarmScene } from './game/scenes/FarmScene.js';
 import { ContinentScene } from './game/scenes/ContinentScene.js';
 import { MiniGameScene } from './game/scenes/MiniGameScene.js';
+import { GameMetrics } from './core/GameMetrics.js';
+import { MetricsBar } from './ui/MetricsBar.js';
 import { CollectionScene } from './game/scenes/CollectionScene.js';
 import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
 
 (async () => {
-    // Créer et initialiser l'application PixiJS
     const app = await createApp();
     mountApp(app, 'app');
 
     console.log('Pixi app started');
+
+    const gameMetrics = new GameMetrics();
+
+    const metricsBar = new MetricsBar();
+
+    gameMetrics.addListener((metrics) => {
+      metricsBar.updateMetrics(metrics);
+    });
+
+    metricsBar.updateMetrics(gameMetrics.getAllMetrics());
+
 
     // Démarrer le système de remplissage passif des zones de collecte
     CollectionZoneManager.start();
@@ -41,45 +53,13 @@ import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
 
     // Créer la scène principale (ferme/île)
     const farmScene = new FarmScene(app, (id, name) => {
-      // Si c'est le 8ème continent, naviguer vers cette scène
-      if (id === '8eme-continent') {
-        sceneManager.goTo('continent');
-        return;
-      }
-      
-      // Sinon, ouvrir le mini-jeu
+      // Callback ouverture lieu : cacher carte, ouvrir mini-jeu
       farmScene.hide();
       miniGameScene.open(id, name);
     });
 
-    // Créer la scène du 8ème Continent
-    const continentScene = new ContinentScene(
-      app,
-      (id, name) => {
-        // Zones de collecte → ouvrir la scène de collecte
-        if (id.startsWith('collection-')) {
-          continentScene.hide();
-          collectionScene.open(id, name);
-          return;
-        }
-        
-        // Autres lieux → ouvrir le mini-jeu générique
-        continentScene.hide();
-        miniGameScene.open(id, name);
-      },
-      (targetScene) => {
-        // Naviguer vers une autre scène (retour à la ferme)
-        if (targetScene === 'farm') {
-          sceneManager.goTo('farm');
-        }
-      }
-    );
-
-    // Enregistrer les scènes
-    sceneManager.register('farm', farmScene);
-    sceneManager.register('continent', continentScene);
-
-    // Ajouter les overlays par-dessus
+    // Ajouter les scènes au stage
+    app.stage.addChild(farmScene);
     app.stage.addChild(miniGameScene);
     app.stage.addChild(collectionScene);
 
@@ -90,9 +70,6 @@ import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
 
     // Exposer pour le debug
     window.app = app;
-    window.sceneManager = sceneManager;
     window.farmScene = farmScene;
-    window.continentScene = continentScene;
     window.miniGameScene = miniGameScene;
-    window.collectionScene = collectionScene;
 })();
