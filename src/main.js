@@ -80,7 +80,7 @@ import { AudioManager } from './core/AudioManager.js';
       // Sinon, ouvrir le mini-jeu
       farmScene.hide();
       miniGameScene.open(id, name);
-    });
+    }, gameMetrics);
 
     // Créer la scène du 8ème Continent
     const continentScene = new ContinentScene(

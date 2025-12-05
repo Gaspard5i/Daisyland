@@ -12,12 +12,14 @@ export class FarmScene extends PIXI.Container {
   /**
    * @param {PIXI.Application} app - L'application PixiJS
    * @param {Function} onOpenLocation - Callback quand on clique sur un lieu
+   * @param {Object} gameMetrics - Instance de GameMetrics pour modifier les métriques
    */
-  constructor(app, onOpenLocation) {
+  constructor(app, onOpenLocation, gameMetrics) {
     super();
     
     this.app = app;
     this.onOpenLocation = onOpenLocation;
+    this.gameMetrics = gameMetrics;
     
     // Conteneurs
     this.mapContainer = new PIXI.Container();
@@ -29,6 +31,9 @@ export class FarmScene extends PIXI.Container {
     
     // Dessiner le fond
     this._createBackground();
+    
+    // Charger et ajouter l'île SVG
+    this._loadIslandSVG();
     
     // Créer les boutons/lieux
     this._createLocations();
@@ -57,12 +62,12 @@ export class FarmScene extends PIXI.Container {
   }
   
   /**
-   * Crée le fond de la map (nuages, eau, terre)
+   * Crée le fond de la map (nuages uniquement, l'océan est un SVG)
    */
   _createBackground() {
     const bg = new PIXI.Graphics();
     
-    // 1. Nuages (blanc) - Couche extérieure
+    // Nuages (blanc) - Couche extérieure
     bg.beginFill(COLORS.CLOUDS);
     bg.drawRect(0, 0, MAP.WIDTH, MAP.HEIGHT);
     bg.endFill();
@@ -77,45 +82,56 @@ export class FarmScene extends PIXI.Container {
     });
     bg.endFill();
     
-    // 2. Eau (bleu)
-    bg.beginFill(COLORS.WATER);
-    bg.drawRoundedRect(
-      ZONES.WATER.X, ZONES.WATER.Y,
-      ZONES.WATER.WIDTH, ZONES.WATER.HEIGHT, 20
-    );
-    bg.endFill();
-    
-    // Vagues décoratives
-    this._drawWaves(bg);
-    
-    // 3. Terre (vert)
-    bg.beginFill(COLORS.LAND);
-    bg.drawRoundedRect(
-      ZONES.LAND.X, ZONES.LAND.Y,
-      ZONES.LAND.WIDTH, ZONES.LAND.HEIGHT, 30
-    );
-    bg.endFill();
-    
-    // Herbe décorative
-    bg.beginFill(COLORS.GRASS);
-    for (let i = 0; i < 30; i++) {
-      const gx = ZONES.LAND.X + 50 + Math.random() * (ZONES.LAND.WIDTH - 100);
-      const gy = ZONES.LAND.Y + 50 + Math.random() * (ZONES.LAND.HEIGHT - 100);
-      bg.drawCircle(gx, gy, 8 + Math.random() * 12);
-    }
-    bg.endFill();
-    
-    // Arbres
-    bg.beginFill(COLORS.TREES);
-    const treePositions = this._getTreePositions();
-    treePositions.forEach(pos => {
-      bg.drawCircle(pos.x, pos.y, 20);
-      bg.drawCircle(pos.x + 15, pos.y + 8, 15);
-      bg.drawCircle(pos.x - 12, pos.y + 5, 18);
-    });
-    bg.endFill();
-    
     this.mapContainer.addChild(bg);
+    
+    // Charger l'océan SVG en arrière-plan
+    this._loadOceanSVG();
+  }
+
+  /**
+   * Charge et affiche le SVG de l'océan
+   */
+  async _loadOceanSVG() {
+    try {
+      const texture = await PIXI.Assets.load('/assets/svg/Ocean.svg');
+      const ocean = new PIXI.Sprite(texture);
+      
+      // Positionner et dimensionner l'océan pour correspondre à la zone WATER
+      ocean.x = ZONES.WATER.X;
+      ocean.y = ZONES.WATER.Y;
+      ocean.width = ZONES.WATER.WIDTH;
+      ocean.height = ZONES.WATER.HEIGHT;
+      
+      // Ajouter l'océan après le background (index 1)
+      this.mapContainer.addChildAt(ocean, 1);
+      
+      console.log('🌊 Océan SVG chargé');
+    } catch (err) {
+      console.error('Erreur chargement Ocean.svg:', err);
+    }
+  }
+
+  /**
+   * Charge et affiche le SVG de l'île
+   */
+  async _loadIslandSVG() {
+    try {
+      const texture = await PIXI.Assets.load('/assets/svg/Island.svg');
+      const island = new PIXI.Sprite(texture);
+      
+      // Positionner et dimensionner l'île pour correspondre à la zone LAND
+      island.x = ZONES.LAND.X;
+      island.y = ZONES.LAND.Y;
+      island.width = ZONES.LAND.WIDTH;
+      island.height = ZONES.LAND.HEIGHT;
+      
+      // Ajouter l'île au container (après l'océan, index 2)
+      this.mapContainer.addChildAt(island, 2);
+      
+      console.log('🏝️ Île SVG chargée');
+    } catch (err) {
+      console.error('Erreur chargement Island.svg:', err);
+    }
   }
   
   /**
@@ -193,6 +209,12 @@ export class FarmScene extends PIXI.Container {
         const y = ZONES.LAND.Y + landMargin + r * ((ZONES.LAND.HEIGHT - landMargin * 2) / (landRows - 1 || 1));
         const index = r * landCols + c + 1;
         
+        // Ferme 2 = Vélo (action directe électricité)
+        if (index === 2) {
+          this._createBikeButton(x, y);
+          continue;
+        }
+        
         const btn = new Button({
           label: `Ferme ${index}`,
           x, y,
@@ -227,6 +249,58 @@ export class FarmScene extends PIXI.Container {
       this.mapContainer.addChild(btn);
       this.buttons.push(btn);
     });
+  }
+
+  /**
+   * Crée le bouton vélo qui génère de l'électricité au clic
+   */
+  async _createBikeButton(x, y) {
+    try {
+      const texture = await PIXI.Assets.load('/assets/svg/bike.svg');
+      const bike = new PIXI.Sprite(texture);
+      
+      // Taille et position - centré sur l'île
+      const targetSize = 50;
+      const scaleX = targetSize / texture.width;
+      const scaleY = targetSize / texture.height;
+      bike.scale.set(scaleX, scaleY);
+      bike.anchor.set(0.5, 0.5);
+      bike.x = ZONES.LAND.X + ZONES.LAND.WIDTH / 2;
+      bike.y = ZONES.LAND.Y + ZONES.LAND.HEIGHT / 2;
+      
+      // Sauvegarder l'échelle de base
+      const baseScale = scaleX;
+      
+      // Interactivité
+      bike.eventMode = 'static';
+      bike.cursor = 'pointer';
+      
+      // Animation au survol
+      bike.on('pointerenter', () => {
+        bike.scale.set(baseScale * 1.15);
+      });
+      
+      bike.on('pointerleave', () => {
+        bike.scale.set(baseScale);
+      });
+      
+      // Clic = ajouter électricité
+      bike.on('pointerdown', () => {
+        if (this.gameMetrics) {
+          this.gameMetrics.addToMetric('electricity', 5);
+          console.log('⚡ +5 électricité !');
+          
+          // Animation de feedback
+          bike.scale.set(baseScale * 0.9);
+          setTimeout(() => bike.scale.set(baseScale * 1.15), 100);
+        }
+      });
+      
+      this.mapContainer.addChild(bike);
+      console.log('🚲 Vélo créé');
+    } catch (err) {
+      console.error('Erreur chargement bike.svg:', err);
+    }
   }
   
   /**
