@@ -10,12 +10,22 @@ import { CollectionScene } from './game/scenes/CollectionScene.js';
 import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
 import { WasteManager } from './game/systems/WasteManager.js';
 import { initTooltip } from './ui/Tooltip.js';
+import { AudioManager } from './core/AudioManager.js';
 
 (async () => {
     const app = await createApp();
     mountApp(app, 'app');
 
     console.log('Pixi app started');
+
+    // Initialiser la musique de fond (3 pistes en boucle)
+    AudioManager.init([
+      '/assets/audio/son.mp3',
+      '/assets/audio/son_2.mp3',
+      '/assets/audio/son_3.mp3',
+    ]);
+    AudioManager.setVolume(0.25);
+    AudioManager.enableOnInteraction();
 
     // Initialiser le système de tooltips en premier (nécessaire avant de créer les UI)
     initTooltip(app.stage);
@@ -124,4 +134,5 @@ import { initTooltip } from './ui/Tooltip.js';
     window.continentScene = continentScene;
     window.miniGameScene = miniGameScene;
     window.collectionScene = collectionScene;
+    window.audioManager = AudioManager;
 })();
