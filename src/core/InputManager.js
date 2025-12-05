@@ -96,7 +96,8 @@ export class InputManager {
     const minZoomY = screenHeight / this.mapHeight;
     
     // Prendre le plus grand des deux pour couvrir les deux dimensions
-    this.minZoom = Math.max(minZoomX, minZoomY);
+    // + ajouter une marge de 20% pour ne pas trop dézoomer
+    this.minZoom = Math.max(minZoomX, minZoomY) * 1.2;
     
     // Si le zoom actuel est en dessous du nouveau minimum, l'ajuster
     if (this.zoomLevel < this.minZoom) {

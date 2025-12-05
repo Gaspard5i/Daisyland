@@ -8,7 +8,7 @@ export function startGame(app) {
   
   // Configuration des zones de la map
   const CLOUD_MARGIN = 100;  // Épaisseur des nuages (blanc)
-  const WATER_MARGIN = 150;  // Épaisseur de l'eau (bleu)
+  const WATER_MARGIN = 250;  // Épaisseur de l'eau (bleu) - agrandi
   
   // Zones calculées
   const WATER_X = CLOUD_MARGIN;
