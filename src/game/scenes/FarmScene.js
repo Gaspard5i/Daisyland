@@ -47,8 +47,13 @@ export class FarmScene extends PIXI.Container {
   _centerMap() {
     const screenWidth = this.app.renderer.width;
     const screenHeight = this.app.renderer.height;
-    this.mapContainer.x = (screenWidth - MAP.WIDTH) / 2;
-    this.mapContainer.y = (screenHeight - MAP.HEIGHT) / 2;
+    const zoom = this.inputManager.getZoom();
+    const scaledMapWidth = MAP.WIDTH * zoom;
+    const scaledMapHeight = MAP.HEIGHT * zoom;
+    
+    // Centrer la vue sur le milieu de la map
+    this.mapContainer.x = (screenWidth - scaledMapWidth) / 2;
+    this.mapContainer.y = (screenHeight - scaledMapHeight) / 2;
   }
   
   /**
