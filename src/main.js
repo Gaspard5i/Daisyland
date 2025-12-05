@@ -1,13 +1,25 @@
 import { createApp, mountApp } from './core/App.js';
 import { FarmScene } from './game/scenes/FarmScene.js';
 import { MiniGameScene } from './game/scenes/MiniGameScene.js';
+import { GameMetrics } from './core/GameMetrics.js';
+import { MetricsBar } from './ui/MetricsBar.js';
 
 (async () => {
-    // Créer et initialiser l'application PixiJS
     const app = await createApp();
     mountApp(app, 'app');
 
     console.log('Pixi app started');
+
+    const gameMetrics = new GameMetrics();
+
+    const metricsBar = new MetricsBar();
+
+    gameMetrics.addListener((metrics) => {
+      metricsBar.updateMetrics(metrics);
+    });
+
+    metricsBar.updateMetrics(gameMetrics.getAllMetrics());
+
 
     // Créer les scènes
     const miniGameScene = new MiniGameScene(app, () => {
@@ -17,19 +29,12 @@ import { MiniGameScene } from './game/scenes/MiniGameScene.js';
     });
     
     const farmScene = new FarmScene(app, (id, name) => {
-      // Callback ouverture lieu : cacher carte, ouvrir mini-jeu
       farmScene.hide();
       miniGameScene.open(id, name);
     });
 
-    // Ajouter les scènes au stage
     app.stage.addChild(farmScene);
     app.stage.addChild(miniGameScene);
 
-    console.log('Daisyland initialisé !');
-
-    // Exposer pour le debug
-    window.app = app;
-    window.farmScene = farmScene;
-    window.miniGameScene = miniGameScene;
+    app.stage.addChild(metricsBar);
 })();
