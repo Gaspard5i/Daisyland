@@ -1,28 +1,68 @@
 import * as PIXI from 'pixi.js';
+import { InputManager } from './core/InputManager.js';
 
 export function startGame(app) {
+  // Configuration de la taille de la map (plus grande que l'écran pour permettre le scroll)
+  const MAP_WIDTH = 1600;  // Largeur de la map
+  const MAP_HEIGHT = 1200; // Hauteur de la map
+  
   // Containers
   const mapContainer = new PIXI.Container();
   const uiContainer = new PIXI.Container();
   const miniGameContainer = new PIXI.Container();
 
-  // Background (the "map")
+  // Initialiser le gestionnaire d'entrées pour le drag de la map
+  const inputManager = new InputManager(app, mapContainer);
+  inputManager.setMapSize(MAP_WIDTH, MAP_HEIGHT);
+
+  // Background (the "map") - maintenant plus grand que l'écran
   const bg = new PIXI.Graphics();
   function drawBackground() {
     bg.clear();
+    
+    // Fond principal de la map
     bg.beginFill(0x66cc66); // greenish map
-    bg.drawRect(0, 0, app.renderer.width, app.renderer.height);
+    bg.drawRect(0, 0, MAP_WIDTH, MAP_HEIGHT);
+    bg.endFill();
+    
+    // Dessiner une grille pour visualiser le déplacement
+    bg.lineStyle(1, 0x55aa55, 0.5);
+    const gridSize = 100;
+    for (let x = 0; x <= MAP_WIDTH; x += gridSize) {
+      bg.moveTo(x, 0);
+      bg.lineTo(x, MAP_HEIGHT);
+    }
+    for (let y = 0; y <= MAP_HEIGHT; y += gridSize) {
+      bg.moveTo(0, y);
+      bg.lineTo(MAP_WIDTH, y);
+    }
+    
+    // Ajouter quelques éléments décoratifs pour montrer l'étendue de la map
+    bg.lineStyle(0);
+    bg.beginFill(0x558855);
+    // Coins de la map
+    bg.drawCircle(50, 50, 30);
+    bg.drawCircle(MAP_WIDTH - 50, 50, 30);
+    bg.drawCircle(50, MAP_HEIGHT - 50, 30);
+    bg.drawCircle(MAP_WIDTH - 50, MAP_HEIGHT - 50, 30);
     bg.endFill();
   }
   drawBackground();
   mapContainer.addChild(bg);
 
-  // Title
-  const titleStyle = { fontFamily: 'Arial', fontSize: 36, fill: 0xffffff };
+  // Title (fixed in UI, not on map)
+  const titleStyle = { fontFamily: 'Arial', fontSize: 36, fill: 0xffffff, dropShadow: true, dropShadowDistance: 2 };
   const title = new PIXI.Text('Carte de Daisyland', titleStyle);
   title.x = 20;
   title.y = 20;
   uiContainer.addChild(title);
+
+  // Instruction pour le drag (UI fixe)
+  const instructionStyle = { fontFamily: 'Arial', fontSize: 14, fill: 0xffffff, dropShadow: true, dropShadowDistance: 1 };
+  const instruction = new PIXI.Text('🖱️ Maintenez clic + glissez pour déplacer la carte', instructionStyle);
+  instruction.x = 20;
+  instruction.y = 60;
+  uiContainer.addChild(instruction);
 
   // Helper to create a button on the map
   function createMapButton(x, y, labelText, id) {
@@ -42,10 +82,20 @@ export function startGame(app) {
     btn.addChild(label);
 
     // Simple hover effect
-    btn.on('pointerover', () => btn.alpha = 0.85);
-    btn.on('pointerout', () => btn.alpha = 1);
+    btn.on('pointerover', () => {
+      btn.alpha = 0.85;
+      app.canvas.style.cursor = 'pointer';
+    });
+    btn.on('pointerout', () => {
+      btn.alpha = 1;
+      if (!inputManager.isDraggingMap()) {
+        app.canvas.style.cursor = 'default';
+      }
+    });
 
-    btn.on('pointerdown', () => {
+    btn.on('pointerdown', (event) => {
+      // Empêcher le drag de la map quand on clique sur un bouton
+      event.stopPropagation();
       openMiniGame(id, labelText);
     });
 
@@ -62,15 +112,15 @@ export function startGame(app) {
     return btn;
   }
 
-  // Create several buttons spread across the screen
+  // Create several buttons spread across the map (now using MAP dimensions)
   const buttons = [];
-  const margin = 80;
-  const cols = 3;
-  const rows = 2;
+  const margin = 120;
+  const cols = 4;  // Plus de colonnes pour une plus grande map
+  const rows = 3;  // Plus de lignes
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const x = margin + c * ((app.renderer.width - margin * 2) / (cols - 1 || 1));
-      const y = 140 + r * ((app.renderer.height - 200) / (rows - 1 || 1));
+      const x = margin + c * ((MAP_WIDTH - margin * 2) / (cols - 1 || 1));
+      const y = 140 + r * ((MAP_HEIGHT - 200) / (rows - 1 || 1));
       const index = r * cols + c + 1;
       buttons.push(createMapButton(x, y, `Mini-jeu ${index}`, `minigame-${index}`));
     }
@@ -226,20 +276,9 @@ export function startGame(app) {
 
   // Resize handler
   function onResize() {
-    drawBackground();
-    // remove previous interactive map elements then recreate (keep bg)
-    mapContainer.removeChildren();
-    mapContainer.addChild(bg);
-
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const x = margin + c * ((app.renderer.width - margin * 2) / (cols - 1 || 1));
-        const y = 140 + r * ((app.renderer.height - 200) / (rows - 1 || 1));
-        const index = r * cols + c + 1;
-        createMapButton(x, y, `Mini-jeu ${index}`, `minigame-${index}`);
-      }
-    }
-
+    // Mettre à jour les limites de déplacement selon la nouvelle taille d'écran
+    inputManager.setMapSize(MAP_WIDTH, MAP_HEIGHT);
+    
     // Update mini-game background size if visible
     if (miniGameContainer.visible && miniGameContainer.children.length > 0) {
       const mgBg = miniGameContainer.getChildAt(0);
@@ -261,14 +300,17 @@ export function startGame(app) {
 
   window.addEventListener('resize', onResize);
 
-  console.log('Carte initialisée avec', buttons.length, 'boutons.');
+  console.log('Carte initialisée avec', buttons.length, 'boutons. Maintenez clic pour déplacer la carte.');
 
   return {
     stop() {
       window.removeEventListener('resize', onResize);
+      inputManager.destroy();
       if (mapContainer.parent) mapContainer.parent.removeChild(mapContainer);
       if (uiContainer.parent) uiContainer.parent.removeChild(uiContainer);
       if (miniGameContainer.parent) miniGameContainer.parent.removeChild(miniGameContainer);
-    }
+    },
+    // Exposer l'inputManager pour un contrôle externe si nécessaire
+    inputManager
   };
 }
