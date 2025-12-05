@@ -5,6 +5,9 @@ import { ContinentScene } from './game/scenes/ContinentScene.js';
 import { MiniGameScene } from './game/scenes/MiniGameScene.js';
 import { GameMetrics } from './core/GameMetrics.js';
 import { MetricsBar } from './ui/MetricsBar.js';
+import { FabricWindow } from './ui/FabricWindow.js';
+import { MarketWindow } from './ui/MarketWindow.js';
+import { FishingWindow } from './ui/FishingWindow.js';
 import { UserBar } from './ui/UserBar.js';
 import { CollectionScene } from './game/scenes/CollectionScene.js';
 import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
@@ -33,6 +36,20 @@ import { initTooltip } from './ui/Tooltip.js';
       gameMetrics.setMetric('waste', totalWaste);
     });
 
+    // Fenêtres UI (modales) - créées en premier pour être disponibles dans les callbacks
+    const fabricWindow = new FabricWindow(app, () => {
+      console.log('Fabric window closed');
+    }, gameMetrics);
+
+    const marketWindow = new MarketWindow(app, () => {
+      console.log('Market window closed');
+    }, gameMetrics);
+
+    const fishingWindow = new FishingWindow(app, () => {
+      console.log('Fishing window closed');
+    }, gameMetrics);
+
+    // Créer les scènes
     // Démarrer le système de remplissage passif des zones de collecte
     CollectionZoneManager.start();
     console.log('♻️ Zones de collecte actives - remplissage passif démarré');
@@ -61,6 +78,20 @@ import { initTooltip } from './ui/Tooltip.js';
 
     // Créer la scène principale (ferme/île)
     const farmScene = new FarmScene(app, (id, name) => {
+
+        if (id === 'port-east') {
+            marketWindow.open();
+            return;
+        }
+        if (id === 'farm-3') {
+            fabricWindow.open();
+            return;
+        }
+        if (id === 'farm-6'){
+            fishingWindow.open();
+            return;
+        }
+
       // Si c'est le 8ème continent, naviguer vers cette scène
       if (id === '8eme-continent') {
         sceneManager.goTo('continent');
@@ -109,6 +140,18 @@ import { initTooltip } from './ui/Tooltip.js';
 
     // Ajouter la barre de métriques tout en haut (toujours visible)
     app.stage.addChild(metricsBar);
+
+
+    app.stage.addChild(fabricWindow);
+    app.stage.addChild(marketWindow);
+    app.stage.addChild(fishingWindow);
+
+    // Exposer les fenêtres globalement pour le debug (optionnel)
+    window.gameWindows = {
+      fabric: fabricWindow,
+      market: marketWindow,
+      fishing: fishingWindow,
+    };
 
     // Afficher la scène de départ
     sceneManager.showImmediate('farm');
