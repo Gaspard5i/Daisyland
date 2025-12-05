@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Audio - Daisyland</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-family: 'Comic Sans MS', cursive, sans-serif;
+      }
+
+      #container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+      }
+
+      h1 {
+        color: #fff;
+        font-size: 48px;
+        text-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+        margin-bottom: 30px;
+        animation: bounce 2s infinite;
+      }
+
+      @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+
+      #info {
+        background: rgba(255,255,255,0.9);
+        padding: 20px 30px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        border: 4px solid #fff;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      #track-info {
+        font-size: 24px;
+        color: #667eea;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      #loop-info {
+        font-size: 18px;
+        color: #764ba2;
+      }
+
+      /* Volume Bar Styles */
+      #volume-control {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        background: linear-gradient(135deg, #ff6b9d 0%, #feca57 100%);
+        padding: 15px 20px;
+        border-radius: 25px;
+        box-shadow:
+          0 8px 25px rgba(0,0,0,0.3),
+          inset 0 -3px 0 rgba(0,0,0,0.2),
+          inset 0 3px 0 rgba(255,255,255,0.3);
+        border: 4px solid #fff;
+        transform: translateY(0);
+        transition: transform 0.3s ease;
+      }
+
+      #volume-control:hover {
+        transform: translateY(-5px);
+      }
+
+      .volume-label {
+        color: #fff;
+        font-family: 'Comic Sans MS', cursive, sans-serif;
+        font-weight: bold;
+        font-size: 14px;
+        text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+        margin-bottom: 8px;
+        text-align: center;
+      }
+
+      #volume-slider {
+        -webkit-appearance: none;
+        width: 150px;
+        height: 12px;
+        background: linear-gradient(to right, #c23e3e 0%, #f5dd5d 50%, #68d391 100%);
+        outline: none;
+        border-radius: 10px;
+        box-shadow:
+          inset 0 2px 4px rgba(0,0,0,0.3),
+          0 2px 0 rgba(255,255,255,0.5);
+        border: 2px solid #fff;
+      }
+
+      #volume-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 24px;
+        height: 24px;
+        background: radial-gradient(circle, #fff 40%, #feca57 100%);
+        cursor: pointer;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        box-shadow:
+          0 4px 8px rgba(0,0,0,0.3),
+          inset 0 -2px 0 rgba(0,0,0,0.2),
+          inset 0 2px 0 rgba(255,255,255,0.8);
+        transition: transform 0.2s ease;
+      }
+
+      #volume-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+      }
+
+      #volume-slider::-moz-range-thumb {
+        width: 24px;
+        height: 24px;
+        background: radial-gradient(circle, #fff 40%, #feca57 100%);
+        cursor: pointer;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        box-shadow:
+          0 4px 8px rgba(0,0,0,0.3),
+          inset 0 -2px 0 rgba(0,0,0,0.2),
+          inset 0 2px 0 rgba(255,255,255,0.8);
+        transition: transform 0.2s ease;
+      }
+
+      #volume-slider::-moz-range-thumb:hover {
+        transform: scale(1.2);
+      }
+
+      #volume-display {
+        text-align: center;
+        color: #fff;
+        font-family: 'Comic Sans MS', cursive, sans-serif;
+        font-weight: bold;
+        font-size: 16px;
+        margin-top: 8px;
+        text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+      }
+
+      /* Controls */
+      #controls {
+        margin-top: 20px;
+      }
+
+      button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: 3px solid white;
+        padding: 12px 30px;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 15px;
+        cursor: pointer;
+        margin: 0 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
+        font-family: 'Comic Sans MS', cursive, sans-serif;
+      }
+
+      button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Audio Elements -->
+    <audio id="audio1" preload="auto">
+      <source src="assets/audio/son.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio2" preload="auto">
+      <source src="assets/audio/son_2.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="audio3" preload="auto">
+      <source src="assets/audio/son_3.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="container">
+      <h1>🎵 Test Audio System 🎵</h1>
+
+      <div id="info">
+        <div id="track-info">Track 1/3</div>
+        <div id="loop-info">Loop 1/3</div>
+      </div>
+
+      <div id="controls">
+        <button id="pauseBtn">⏸️ Pause</button>
+        <button id="resumeBtn">▶️ Resume</button>
+        <button id="stopBtn">⏹️ Stop</button>
+      </div>
+    </div>
+
+    <!-- Volume Control -->
+    <div id="volume-control">
+      <div class="volume-label">🎵 VOLUME 🎵</div>
+      <input type="range" id="volume-slider" min="0" max="100" value="70">
+      <div id="volume-display">70%</div>
+    </div>
+
+    <script>
+      /**
+       * AudioManager - Gère la rotation de 3 musiques avec loops et transitions
+       */
+      class AudioManager {
+        constructor() {
+          // Configuration des pistes
+          this.tracks = [
+            {
+              element: document.getElementById('audio1'),
+              cutTime: 24.4,  // son.mp3 se coupe à 24.4s
+              loopsPlayed: 0
+            },
+            {
+              element: document.getElementById('audio2'),
+              cutTime: 24.8,  // son_2.mp3 se coupe à 24.8s
+              loopsPlayed: 0
+            },
+            {
+              element: document.getElementById('audio3'),
+              cutTime: 24.5,  // son_3.mp3 se coupe à 24.5s
+              loopsPlayed: 0
+            }
+          ];
+
+          this.currentTrackIndex = 0;
+          this.maxLoopsPerTrack = 3;
+          this.isFading = false;
+          this.isTransitioning = false;
+          this.fadeTime = 2000; // 2 secondes de fade
+          this.fadeSteps = 100;
+          this.masterVolume = 0.7; // Volume initial à 70%
+
+          this.init();
+        }
+
+        init() {
+          // Configuration initiale du volume pour toutes les pistes
+          this.tracks.forEach(track => {
+            track.element.volume = this.masterVolume;
+          });
+
+          // Setup du contrôle de volume
+          this.setupVolumeControl();
+
+          // Setup des boutons de contrôle
+          this.setupControls();
+
+          // Setup de l'affichage des infos
+          this.updateDisplay();
+
+          // Démarrage de la première piste
+          this.playCurrentTrack();
+
+          // Monitoring du temps pour chaque piste
+          this.tracks.forEach((track, index) => {
+            track.element.addEventListener('timeupdate', () => {
+              if (index === this.currentTrackIndex && !this.isFading) {
+                this.checkCutTime(track, index);
+                this.updateDisplay();
+              }
+            });
+
+            track.element.addEventListener('ended', () => {
+              console.log(`Track ${index + 1} ended unexpectedly`);
+            });
+
+            track.element.addEventListener('error', (e) => {
+              console.error(`Error loading track ${index + 1}:`, e);
+            });
+          });
+        }
+
+        setupControls() {
+          document.getElementById('pauseBtn').addEventListener('click', () => {
+            this.pause();
+          });
+
+          document.getElementById('resumeBtn').addEventListener('click', () => {
+            this.resume();
+          });
+
+          document.getElementById('stopBtn').addEventListener('click', () => {
+            this.stop();
+            this.currentTrackIndex = 0;
+            this.tracks.forEach(track => track.loopsPlayed = 0);
+            this.updateDisplay();
+          });
+        }
+
+        setupVolumeControl() {
+          const slider = document.getElementById('volume-slider');
+          const display = document.getElementById('volume-display');
+
+          slider.addEventListener('input', (e) => {
+            const value = e.target.value;
+            this.masterVolume = value / 100;
+            display.textContent = `${value}%`;
+
+            // Applique le nouveau volume à toutes les pistes
+            this.tracks.forEach(track => {
+              if (!this.isFading) {
+                track.element.volume = this.masterVolume;
+              }
+            });
+          });
+        }
+
+        updateDisplay() {
+          const currentTrack = this.tracks[this.currentTrackIndex];
+          document.getElementById('track-info').textContent =
+            `Track ${this.currentTrackIndex + 1}/3`;
+          document.getElementById('loop-info').textContent =
+            `Loop ${currentTrack.loopsPlayed + 1}/3`;
+        }
+
+        playCurrentTrack() {
+          const currentTrack = this.tracks[this.currentTrackIndex];
+          currentTrack.element.currentTime = 0;
+          currentTrack.element.volume = this.masterVolume;
+
+          currentTrack.element.play()
+            .then(() => {
+              console.log(`Playing track ${this.currentTrackIndex + 1}, loop ${currentTrack.loopsPlayed + 1}/${this.maxLoopsPerTrack}`);
+              this.updateDisplay();
+            })
+            .catch(err => {
+              console.error('Error playing track:', err);
+              // Tentative de relecture après interaction utilisateur
+              document.addEventListener('click', () => {
+                currentTrack.element.play();
+              }, { once: true });
+            });
+        }
+
+        checkCutTime(track, index) {
+          // Ne pas vérifier si on est déjà en transition
+          if (this.isTransitioning) return;
+
+          const currentTime = track.element.currentTime;
+
+          // Vérifie si on a atteint le temps de coupure
+          if (currentTime >= track.cutTime) {
+            this.isTransitioning = true;
+            track.loopsPlayed++;
+
+            console.log(`Track ${index + 1} reached cut time. Loops: ${track.loopsPlayed}/${this.maxLoopsPerTrack}`);
+
+            if (track.loopsPlayed >= this.maxLoopsPerTrack) {
+              // Passer à la piste suivante avec transition
+              this.switchToNextTrack();
+            } else {
+              // Relancer la même piste depuis le début
+              track.element.currentTime = 0;
+              this.updateDisplay();
+              this.isTransitioning = false;
+            }
+          }
+        }
+
+        async switchToNextTrack() {
+          if (this.isFading) return;
+
+          this.isFading = true;
+          const currentTrack = this.tracks[this.currentTrackIndex];
+          const nextTrackIndex = (this.currentTrackIndex + 1) % this.tracks.length;
+          const nextTrack = this.tracks[nextTrackIndex];
+
+          console.log(`Switching from track ${this.currentTrackIndex + 1} to track ${nextTrackIndex + 1}`);
+
+          // Reset du compteur de loops pour la prochaine piste
+          nextTrack.loopsPlayed = 0;
+
+          // Fade out de la piste actuelle et fade in de la suivante
+          await this.crossfade(currentTrack.element, nextTrack.element);
+
+          // Mise à jour de l'index
+          this.currentTrackIndex = nextTrackIndex;
+          this.updateDisplay();
+          this.isFading = false;
+          this.isTransitioning = false;
+        }
+
+        async crossfade(fadeOutElement, fadeInElement) {
+          const stepTime = this.fadeTime / this.fadeSteps;
+
+          console.log('Starting crossfade...');
+
+          // Prépare la piste suivante
+          fadeInElement.currentTime = 0;
+          fadeInElement.volume = 0;
+
+          // Lance la piste suivante
+          try {
+            await fadeInElement.play();
+          } catch (err) {
+            console.error('Error starting next track:', err);
+            return;
+          }
+
+          // Transition progressive
+          for (let i = 0; i <= this.fadeSteps; i++) {
+            const progress = i / this.fadeSteps;
+
+            // Fade out (courbe logarithmique pour un meilleur rendu audio)
+            const fadeOutVolume = this.masterVolume * (1 - progress);
+            fadeOutElement.volume = Math.max(0, Math.min(1, fadeOutVolume));
+
+            // Fade in (courbe logarithmique)
+            const fadeInVolume = this.masterVolume * progress;
+            fadeInElement.volume = Math.max(0, Math.min(1, fadeInVolume));
+
+            if (i % 20 === 0) {
+              console.log(`Fade progress: ${Math.round(progress * 100)}% - Out: ${fadeOutElement.volume.toFixed(2)}, In: ${fadeInElement.volume.toFixed(2)}`);
+            }
+
+            await this.sleep(stepTime);
+          }
+
+          // Assure que les volumes finaux sont corrects
+          fadeOutElement.volume = 0;
+          fadeInElement.volume = this.masterVolume;
+
+          console.log('Crossfade complete');
+
+          // Arrête complètement la piste précédente
+          fadeOutElement.pause();
+          fadeOutElement.currentTime = 0;
+          fadeOutElement.volume = this.masterVolume;
+        }
+
+        sleep(ms) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Méthode pour arrêter tout
+        stop() {
+          this.tracks.forEach(track => {
+            track.element.pause();
+            track.element.currentTime = 0;
+          });
+        }
+
+        // Méthode pour mettre en pause
+        pause() {
+          this.tracks[this.currentTrackIndex].element.pause();
+        }
+
+        // Méthode pour reprendre
+        resume() {
+          this.tracks[this.currentTrackIndex].element.play();
+        }
+      }
+
+      // Initialisation automatique au chargement du DOM
+      let audioManager;
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          audioManager = new AudioManager();
+        });
+      } else {
+        audioManager = new AudioManager();
+      }
+    </script>
+  </body>
+</html>

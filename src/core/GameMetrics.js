@@ -10,28 +10,28 @@ export class GameMetrics {
         name: 'Électricité',
         description: 'Énergie électrique disponible',
         maxValue: 100,
-        actualValue: 50,
+        actualValue: 0,
         level: 1
       },
       food: {
         name: 'Nourriture',
         description: 'Réserves alimentaires',
         maxValue: 100,
-        actualValue: 75,
+        actualValue: 0,
         level: 1
       },
       waste: {
         name: 'Déchets',
         description: 'Quantité de déchets à traiter',
-        maxValue: 100,
-        actualValue: 25,
+        maxValue: 5000,
+        actualValue: 0,
         level: 1
       },
       wood: {
         name: 'Bois',
         description: 'Ressources en bois disponibles',
         maxValue: 100,
-        actualValue: 60,
+        actualValue: 0,
         level: 1
       }
     };

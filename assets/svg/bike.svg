@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="600" height="400">
+  <g transform="translate(50, 180)">
+    
+    <circle cx="150" cy="0" r="30" fill="#EEEEEE" stroke="#333333" stroke-width="2"/>
+    <circle cx="150" cy="0" r="2" fill="#333333"/>
+    <circle cx="0" cy="0" r="30" fill="#EEEEEE" stroke="#333333" stroke-width="2"/>
+    <circle cx="0" cy="0" r="2" fill="#333333"/>
+    
+    <g stroke="#8B0000" stroke-width="5" stroke-linecap="round">
+        <line x1="120" y1="-40" x2="25" y2="-10"/>
+        
+        <line x1="120" y1="-40" x2="30" y2="-70"/>
+        
+        <line x1="30" y1="-70" x2="0" y2="-10"/>
+        
+        <line x1="120" y1="-40" x2="150" y2="-40"/>
+    </g>
+
+    <g transform="translate(15, -10)">
+        <line x1="-15" y1="0" x2="15" y2="0" stroke="#333333" stroke-width="3"/>
+        <rect x="10" y="-15" width="20" height="5" fill="#333333" rx="2" transform="rotate(-15, 10, 0)"/>
+        <rect x="-30" y="10" width="20" height="5" fill="#333333" rx="2" transform="rotate(-15, -15, 0)"/>
+        <circle cx="0" cy="0" r="5" fill="#333333"/>
+    </g>
+
+    <line x1="30" y1="-70" x2="30" y2="-90" stroke="#333333" stroke-width="4"/>
+    <path d="M5, -95 Q30,-110 55,-95 L55,-85 L5,-85 Z" fill="#333333"/>
+    <line x1="150" y1="-40" x2="160" y2="-70" stroke="#8B0000" stroke-width="5" stroke-linecap="round"/>
+    <line x1="160" y1="-70" x2="180" y2="-70" stroke="#333333" stroke-width="5" stroke-linecap="round"/>
+
+    <g transform="translate(-30, -10)">
+        <rect x="-10" y="-20" width="30" height="40" fill="#696969" stroke="#333333" stroke-width="2" rx="5"/>
+        <circle cx="15" cy="0" r="5" fill="#404040" stroke="#333333"/>
+    </g>
+
+    <path d="M-20,-10 Q-60,-30 -40,-70 Q-20,-110 50,-110" stroke="#333333" stroke-width="3" fill="none"/>
+    
+    <g transform="translate(50, -110)">
+        <rect x="-5" y="0" width="10" height="5" fill="#A9A9A9"/>
+        <rect x="-3" y="5" width="6" height="3" fill="#A9A9A9"/>
+        <path d="M0,0 C-15,-10 -15,-30 0,-40 C15,-30 15,-10 0,0 Z" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
+        <path d="M-20,-50 L20,-50 M-25,-30 L25,-30 M-30,-10 L30,-10" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    
+  </g>
+</svg>
