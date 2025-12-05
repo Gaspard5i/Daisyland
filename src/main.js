@@ -7,17 +7,17 @@ import { startGame } from './game.js';
     const app = new Application();
 
     await app.init({
-        width: 800,           // Canvas width
-        height: 600,          // Canvas height
+        resizeTo: window,    // Redimensionne automatiquement à la taille de la fenêtre
         backgroundColor: 0x1099bb, // Background color
         antialias: true,     // Enable antialiasing
-        resolution: 1,       // Resolution / device pixel ratio
+        resolution: window.devicePixelRatio || 1, // Meilleure résolution sur écrans HiDPI
+        autoDensity: true,   // Ajuste automatiquement la densité
         preference: 'webgl', // or 'webgpu' // Renderer preference
     });
 
     // Append view to the DOM
     const container = document.getElementById('app') || document.body;
-    container.appendChild(app.view);
+    container.appendChild(app.canvas);
 
     console.log('Pixi app started');
 
