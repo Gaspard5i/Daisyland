@@ -1,4 +1,7 @@
 import * as PIXI from 'pixi.js';
+import { createMarketOverlay } from './game/ui/MarketOverlay.js';
+import { createFabricOverlay } from './game/ui/FabricOverlay.js';
+import { createFishingOverlay } from './game/ui/FishingOverlay.js';
 
 export function startGame(app) {
   // Containers
@@ -76,8 +79,13 @@ export function startGame(app) {
     }
   }
 
-  // mini-game launcher (placeholder)
+  // mini-game launcher
   function openMiniGame(id, name) {
+    // Special routing:
+    if (id === 'minigame-2') { openInterface('fabric'); return; }
+    if (id === 'minigame-3') { openInterface('shop'); return; }
+    if (id === 'minigame-6') { openInterface('fishing'); return; }
+
     // hide map and show miniGameContainer
     mapContainer.visible = false;
     uiContainer.visible = false;
@@ -90,6 +98,7 @@ export function startGame(app) {
     mgBg.endFill();
     miniGameContainer.addChild(mgBg);
 
+    // Generic placeholder for mini-games (Trash Island logic removed)
     const mgTitleStyle = { fontFamily: 'Arial', fontSize: 30, fill: 0xffffff };
     const mgTitle = new PIXI.Text(`${name}`, mgTitleStyle);
     mgTitle.x = 20;
@@ -101,94 +110,6 @@ export function startGame(app) {
     mgDesc.x = 20;
     mgDesc.y = 70;
     miniGameContainer.addChild(mgDesc);
-
-    // If this is the first mini-game, add a small interactive demo: "Devine un nombre"
-    if (id === 'minigame-1') {
-      const guessContainer = new PIXI.Container();
-      guessContainer.y = mgDesc.y + 60;
-
-      const infoText = new PIXI.Text('Devinez un nombre entre 1 et 10', { fontFamily: 'Arial', fontSize: 18, fill: 0xffffff });
-      infoText.x = 20;
-      infoText.y = 0;
-      guessContainer.addChild(infoText);
-
-      const feedback = new PIXI.Text('', { fontFamily: 'Arial', fontSize: 18, fill: 0xffff00 });
-      feedback.x = 20;
-      feedback.y = 30;
-      guessContainer.addChild(feedback);
-
-      // generate target
-      let target = Math.floor(Math.random() * 10) + 1;
-
-      function createNumberButton(n, x, y) {
-        const b = new PIXI.Graphics();
-        const bw = 40, bh = 40, br = 6;
-        b.beginFill(0xffffff);
-        b.drawRoundedRect(0, 0, bw, bh, br);
-        b.endFill();
-        b.x = x;
-        b.y = y;
-        b.interactive = true;
-        b.buttonMode = true;
-
-        const lbl = new PIXI.Text(String(n), { fontFamily: 'Arial', fontSize: 18, fill: 0x000000 });
-        lbl.anchor.set(0.5);
-        lbl.x = b.x + bw / 2;
-        lbl.y = b.y + bh / 2;
-
-        b.on('pointerdown', () => {
-          if (n === target) {
-            feedback.text = `Bravo ! ${n} est correct.`;
-            feedback.style.fill = 0x00ff00;
-          } else if (n < target) {
-            feedback.text = `${n} est trop petit.`;
-            feedback.style.fill = 0xffcc00;
-          } else {
-            feedback.text = `${n} est trop grand.`;
-            feedback.style.fill = 0xffcc00;
-          }
-        });
-
-        guessContainer.addChild(b);
-        guessContainer.addChild(lbl);
-      }
-
-      // create buttons 1..10 in two rows
-      const colsN = 5;
-      for (let i = 1; i <= 10; i++) {
-        const col = (i - 1) % colsN;
-        const row = Math.floor((i - 1) / colsN);
-        const x = 20 + col * 56;
-        const y = 70 + row * 56;
-        createNumberButton(i, x, y);
-      }
-
-      // Rejouer button
-      const replayBtn = new PIXI.Graphics();
-      const rw = 120, rh = 40, rr = 8;
-      replayBtn.beginFill(0xffffff);
-      replayBtn.drawRoundedRect(0, 0, rw, rh, rr);
-      replayBtn.endFill();
-      replayBtn.x = 20;
-      replayBtn.y = 70 + 2 * 56;
-      replayBtn.interactive = true;
-      replayBtn.buttonMode = true;
-
-      const replayLabel = new PIXI.Text('REJOUER', { fontFamily: 'Arial', fontSize: 14, fill: 0x000000 });
-      replayLabel.anchor.set(0.5);
-      replayLabel.x = replayBtn.x + rw / 2;
-      replayLabel.y = replayBtn.y + rh / 2;
-
-      replayBtn.on('pointerdown', () => {
-        target = Math.floor(Math.random() * 10) + 1;
-        feedback.text = '';
-      });
-
-      guessContainer.addChild(replayBtn);
-      guessContainer.addChild(replayLabel);
-
-      miniGameContainer.addChild(guessContainer);
-    }
 
     // Back button
     const backBtn = new PIXI.Graphics();
@@ -218,6 +139,44 @@ export function startGame(app) {
     miniGameContainer.visible = true;
   }
 
+  // Interfaces overlay (Shop/Fabric/Fishing)
+  let currentInterface = null;
+  function openInterface(kind) {
+    // hide map and ui
+    mapContainer.visible = false;
+    uiContainer.visible = false;
+
+    // clear container
+    miniGameContainer.removeChildren();
+
+    // dim background
+    const dim = new PIXI.Graphics();
+    dim.beginFill(0x000000, 0.4);
+    dim.drawRect(0, 0, app.renderer.width, app.renderer.height);
+    dim.endFill();
+    miniGameContainer.addChild(dim);
+
+    const close = () => {
+      if (currentInterface && currentInterface.destroy) currentInterface.destroy();
+      currentInterface = null;
+      miniGameContainer.visible = false;
+      mapContainer.visible = true;
+      uiContainer.visible = true;
+    };
+
+    // create overlay (GUI)
+    if (kind === 'shop') currentInterface = createMarketOverlay(app, close);
+    else if (kind === 'fabric') currentInterface = createFabricOverlay(app, close);
+    else if (kind === 'fishing') currentInterface = createFishingOverlay(app, close);
+
+    if (currentInterface) {
+      miniGameContainer.addChild(currentInterface.root);
+      miniGameContainer.visible = true;
+      // initial layout
+      currentInterface.resize(app.renderer.width, app.renderer.height);
+    }
+  }
+
   // Add containers to stage
   app.stage.addChild(mapContainer);
   app.stage.addChild(uiContainer);
@@ -240,21 +199,24 @@ export function startGame(app) {
       }
     }
 
-    // Update mini-game background size if visible
+    // Update mini-game/overlay size if visible
     if (miniGameContainer.visible && miniGameContainer.children.length > 0) {
-      const mgBg = miniGameContainer.getChildAt(0);
-      if (mgBg && mgBg.clear) {
-        mgBg.clear();
-        mgBg.beginFill(0x333366);
-        mgBg.drawRect(0, 0, app.renderer.width, app.renderer.height);
-        mgBg.endFill();
-      }
-      // reposition back button if present
-      for (let i = 1; i < miniGameContainer.children.length; i++) {
-        const ch = miniGameContainer.children[i];
-        if (ch.x === 20 && ch.y >= app.renderer.height - 100) {
-          ch.y = app.renderer.height - 60;
+      const first = miniGameContainer.getChildAt(0);
+      if (first && first.clear) {
+        // It is either dim background for interfaces or mg background
+        first.clear();
+        // If we have an active interface, keep it dim; else, color
+        const isDim = !!currentInterface;
+        if (isDim) {
+          first.beginFill(0x000000, 0.4);
+        } else {
+          first.beginFill(0x333366);
         }
+        first.drawRect(0, 0, app.renderer.width, app.renderer.height);
+        first.endFill();
+      }
+      if (currentInterface && currentInterface.resize) {
+        currentInterface.resize(app.renderer.width, app.renderer.height);
       }
     }
   }
