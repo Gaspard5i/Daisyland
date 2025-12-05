@@ -232,7 +232,6 @@ export class FarmScene extends PIXI.Container {
       { x: ZONES.WATER.X + ZONES.WATER.WIDTH * 0.3, y: ZONES.WATER.Y + MARGINS.WATER / 2 + 20, name: 'Île Nord-Ouest', id: 'island-nw' },
       { x: ZONES.WATER.X + ZONES.WATER.WIDTH * 0.7, y: ZONES.WATER.Y + MARGINS.WATER / 2 + 20, name: 'Île Nord-Est', id: 'island-ne' },
       { x: ZONES.WATER.X + ZONES.WATER.WIDTH - MARGINS.WATER / 2, y: ZONES.WATER.Y + ZONES.WATER.HEIGHT * 0.5, name: 'Port Est', id: 'port-east' },
-      { x: ZONES.WATER.X + ZONES.WATER.WIDTH * 0.3, y: ZONES.WATER.Y + ZONES.WATER.HEIGHT - MARGINS.WATER / 2 - 20, name: 'Île Sud-Ouest', id: 'island-sw' },
       { x: ZONES.WATER.X + ZONES.WATER.WIDTH * 0.7, y: ZONES.WATER.Y + ZONES.WATER.HEIGHT - MARGINS.WATER / 2 - 20, name: 'Île Sud-Est', id: 'island-se' },
     ];
     
@@ -249,6 +248,11 @@ export class FarmScene extends PIXI.Container {
       this.buttons.push(btn);
     });
     
+    // Mini île avec fleur Stage 0 (à la place d'Île Sud-Ouest)
+    const miniIslandX = ZONES.WATER.X + ZONES.WATER.WIDTH * 0.3;
+    const miniIslandY = ZONES.WATER.Y + ZONES.WATER.HEIGHT - MARGINS.WATER / 2 - 20;
+    this._createMiniIslandWithFlower(miniIslandX, miniIslandY);
+    
     // Bateau pour aller au 8ème continent (à la place du bouton)
     const boatX = ZONES.WATER.X + MARGINS.WATER / 2;
     const boatY = ZONES.WATER.Y + ZONES.WATER.HEIGHT * 0.5;
@@ -256,6 +260,16 @@ export class FarmScene extends PIXI.Container {
     
     // Ajouter le pont (bridge) en bas milieu-droite de l'île
     this._createBridgeButton();
+    
+    // Ajouter les éléments décoratifs et interactifs sur l'île
+    this._createMerchant();      // Haut droite
+    this._createUpgrader();      // À côté du merchant
+    this._createTent();          // À gauche du vélo
+    this._createWindTurbine();   // Haut milieu
+    this._createFish();          // Dans l'eau
+    this._createParcelGrid();    // Grille 3x3 haut gauche
+    this._createTreeGrid();      // Grille 3x3 bas gauche
+    this._createWell();          // Au-dessus des arbres
   }
 
   /**
@@ -430,6 +444,290 @@ export class FarmScene extends PIXI.Container {
       console.log('🎣 Pêcheur créé');
     } catch (err) {
       console.error('Erreur chargement Fisherman.svg:', err);
+    }
+  }
+
+  /**
+   * Crée le marchand en haut à droite de l'île
+   */
+  async _createMerchant() {
+    try {
+      const texture = await PIXI.Assets.load('/assets/svg/Merchant.svg');
+      const merchant = new PIXI.Sprite(texture);
+      
+      const targetSize = 50;
+      const scaleX = targetSize / texture.width;
+      const scaleY = targetSize / texture.height;
+      merchant.scale.set(scaleX, scaleY);
+      merchant.anchor.set(0.5, 0.5);
+      merchant.x = ZONES.LAND.X + ZONES.LAND.WIDTH * 0.68;
+      merchant.y = ZONES.LAND.Y + ZONES.LAND.HEIGHT * 0.2;
+      
+      const baseScale = scaleX;
+      merchant.eventMode = 'static';
+      merchant.cursor = 'pointer';
+      
+      merchant.on('pointerenter', () => merchant.scale.set(baseScale * 1.15));
+      merchant.on('pointerleave', () => merchant.scale.set(baseScale));
+      merchant.on('pointerdown', () => this._openLocation('merchant', 'Marchand'));
+      
+      this.mapContainer.addChild(merchant);
+      console.log('🛒 Marchand créé');
+    } catch (err) {
+      console.error('Erreur chargement Merchant.svg:', err);
+    }
+  }
+
+  /**
+   * Crée le PNJ upgrader à côté du marchand
+   */
+  async _createUpgrader() {
+    try {
+      const texture = await PIXI.Assets.load('/assets/svg/PNJ_UPGRADER.svg');
+      const upgrader = new PIXI.Sprite(texture);
+      
+      const targetSize = 50;
+      const scaleX = targetSize / texture.width;
+      const scaleY = targetSize / texture.height;
+      upgrader.scale.set(scaleX, scaleY);
+      upgrader.anchor.set(0.5, 0.5);
+      upgrader.x = ZONES.LAND.X + ZONES.LAND.WIDTH * 0.58;
+      upgrader.y = ZONES.LAND.Y + ZONES.LAND.HEIGHT * 0.35;
+      
+      const baseScale = scaleX;
+      upgrader.eventMode = 'static';
+      upgrader.cursor = 'pointer';
+      
+      upgrader.on('pointerenter', () => upgrader.scale.set(baseScale * 1.15));
+      upgrader.on('pointerleave', () => upgrader.scale.set(baseScale));
+      upgrader.on('pointerdown', () => this._openLocation('upgrader', 'Améliorateur'));
+      
+      this.mapContainer.addChild(upgrader);
+      console.log('⬆️ Améliorateur créé');
+    } catch (err) {
+      console.error('Erreur chargement PNJ_UPGRADER.svg:', err);
+    }
+  }
+
+  /**
+   * Crée la tente à gauche du vélo (centre de l'île)
+   */
+  async _createTent() {
+    try {
+      const texture = await PIXI.Assets.load('/assets/svg/tent.svg');
+      const tent = new PIXI.Sprite(texture);
+      
+      const targetSize = 50;
+      const scaleX = targetSize / texture.width;
+      const scaleY = targetSize / texture.height;
+      tent.scale.set(scaleX, scaleY);
+      tent.anchor.set(0.5, 0.5);
+      tent.x = ZONES.LAND.X + ZONES.LAND.WIDTH * 0.42;
+      tent.y = ZONES.LAND.Y + ZONES.LAND.HEIGHT / 2;
+      
+      const baseScale = scaleX;
+      tent.eventMode = 'static';
+      tent.cursor = 'pointer';
+      
+      tent.on('pointerenter', () => tent.scale.set(baseScale * 1.15));
+      tent.on('pointerleave', () => tent.scale.set(baseScale));
+      tent.on('pointerdown', () => this._openLocation('tent', 'Tente'));
+      
+      this.mapContainer.addChild(tent);
+      console.log('⛺ Tente créée');
+    } catch (err) {
+      console.error('Erreur chargement tent.svg:', err);
+    }
+  }
+
+  /**
+   * Crée l'éolienne en haut au milieu de l'île
+   */
+  async _createWindTurbine() {
+    try {
+      const texture = await PIXI.Assets.load('/assets/svg/wind__turbine.svg');
+      const turbine = new PIXI.Sprite(texture);
+      
+      const targetSize = 60;
+      const scaleX = targetSize / texture.width;
+      const scaleY = targetSize / texture.height;
+      turbine.scale.set(scaleX, scaleY);
+      turbine.anchor.set(0.5, 0.5);
+      turbine.x = ZONES.LAND.X + ZONES.LAND.WIDTH / 2;
+      turbine.y = ZONES.LAND.Y + ZONES.LAND.HEIGHT * 0.15;
+      
+      const baseScale = scaleX;
+      turbine.eventMode = 'static';
+      turbine.cursor = 'pointer';
+      
+      turbine.on('pointerenter', () => turbine.scale.set(baseScale * 1.15));
+      turbine.on('pointerleave', () => turbine.scale.set(baseScale));
+      turbine.on('pointerdown', () => this._openLocation('wind-turbine', 'Éolienne'));
+      
+      this.mapContainer.addChild(turbine);
+      console.log('🌬️ Éolienne créée');
+    } catch (err) {
+      console.error('Erreur chargement wind__turbine.svg:', err);
+    }
+  }
+
+  /**
+   * Crée le poisson dans l'eau (décoratif)
+   */
+  async _createFish() {
+    try {
+      const texture = await PIXI.Assets.load('/assets/svg/Fish.svg');
+      const fish = new PIXI.Sprite(texture);
+      
+      const targetSize = 40;
+      const scaleX = targetSize / texture.width;
+      const scaleY = targetSize / texture.height;
+      fish.scale.set(scaleX, scaleY);
+      fish.anchor.set(0.5, 0.5);
+      fish.x = ZONES.WATER.X + ZONES.WATER.WIDTH * 0.6;
+      fish.y = ZONES.WATER.Y + ZONES.WATER.HEIGHT * 0.3;
+      
+      this.mapContainer.addChild(fish);
+      console.log('🐟 Poisson créé');
+    } catch (err) {
+      console.error('Erreur chargement Fish.svg:', err);
+    }
+  }
+
+  /**
+   * Crée la grille 3x3 de parcelles en haut à gauche de l'île
+   */
+  async _createParcelGrid() {
+    try {
+      const texture = await PIXI.Assets.load('/assets/svg/Parcel.svg');
+      const targetSize = 30;
+      const spacing = 35;
+      const startX = ZONES.LAND.X + ZONES.LAND.WIDTH * 0.25;
+      const startY = ZONES.LAND.Y + ZONES.LAND.HEIGHT * 0.15;
+      
+      for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 3; col++) {
+          const parcel = new PIXI.Sprite(texture);
+          const scaleX = targetSize / texture.width;
+          const scaleY = targetSize / texture.height;
+          parcel.scale.set(scaleX, scaleY);
+          parcel.anchor.set(0.5, 0.5);
+          parcel.x = startX + col * spacing;
+          parcel.y = startY + row * spacing;
+          
+          this.mapContainer.addChild(parcel);
+        }
+      }
+      console.log('📦 Grille de parcelles créée');
+    } catch (err) {
+      console.error('Erreur chargement Parcel.svg:', err);
+    }
+  }
+
+  /**
+   * Crée la grille 3x3 d'arbres en bas à gauche de l'île
+   */
+  async _createTreeGrid() {
+    try {
+      const texture = await PIXI.Assets.load('/assets/svg/Tree.svg');
+      const targetSize = 40;
+      const spacing = 45;
+      const startX = ZONES.LAND.X + ZONES.LAND.WIDTH * 0.25;
+      const startY = ZONES.LAND.Y + ZONES.LAND.HEIGHT * 0.7;
+      
+      for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 3; col++) {
+          const tree = new PIXI.Sprite(texture);
+          const scaleX = targetSize / texture.width;
+          const scaleY = targetSize / texture.height;
+          tree.scale.set(scaleX, scaleY);
+          tree.anchor.set(0.5, 0.5);
+          tree.x = startX + col * spacing;
+          tree.y = startY + row * spacing;
+          
+          this.mapContainer.addChild(tree);
+        }
+      }
+      console.log('🌳 Grille d\'arbres créée');
+    } catch (err) {
+      console.error('Erreur chargement Tree.svg:', err);
+    }
+  }
+
+  /**
+   * Crée le puits au-dessus des arbres
+   */
+  async _createWell() {
+    try {
+      const texture = await PIXI.Assets.load('/assets/svg/Well.svg');
+      const well = new PIXI.Sprite(texture);
+      
+      const targetSize = 45;
+      const scaleX = targetSize / texture.width;
+      const scaleY = targetSize / texture.height;
+      well.scale.set(scaleX, scaleY);
+      well.anchor.set(0.5, 0.5);
+      well.x = ZONES.LAND.X + ZONES.LAND.WIDTH * 0.25 + 45; // Centre de la grille d'arbres
+      well.y = ZONES.LAND.Y + ZONES.LAND.HEIGHT * 0.58;     // Au-dessus des arbres
+      
+      const baseScale = scaleX;
+      well.eventMode = 'static';
+      well.cursor = 'pointer';
+      
+      well.on('pointerenter', () => well.scale.set(baseScale * 1.15));
+      well.on('pointerleave', () => well.scale.set(baseScale));
+      well.on('pointerdown', () => this._openLocation('well', 'Puits'));
+      
+      this.mapContainer.addChild(well);
+      console.log('🪣 Puits créé');
+    } catch (err) {
+      console.error('Erreur chargement Well.svg:', err);
+    }
+  }
+
+  /**
+   * Crée une mini île avec une fleur Stage 0 dessus
+   */
+  async _createMiniIslandWithFlower(x, y) {
+    try {
+      // Charger la mini île
+      const islandTexture = await PIXI.Assets.load('/assets/svg/Island.svg');
+      const miniIsland = new PIXI.Sprite(islandTexture);
+      
+      const islandSize = 80;
+      const islandScaleX = islandSize / islandTexture.width;
+      const islandScaleY = islandSize / islandTexture.height;
+      miniIsland.scale.set(islandScaleX, islandScaleY);
+      miniIsland.anchor.set(0.5, 0.5);
+      miniIsland.x = x;
+      miniIsland.y = y;
+      
+      this.mapContainer.addChild(miniIsland);
+      
+      // Charger la fleur Stage 0 par-dessus
+      const flowerTexture = await PIXI.Assets.load('/assets/svg/Stage_0_Flower.svg');
+      const flower = new PIXI.Sprite(flowerTexture);
+      
+      const flowerSize = 35;
+      const flowerScaleX = flowerSize / flowerTexture.width;
+      const flowerScaleY = flowerSize / flowerTexture.height;
+      flower.scale.set(flowerScaleX, flowerScaleY);
+      flower.anchor.set(0.5, 0.5);
+      flower.x = x;
+      flower.y = y - 10; // Légèrement au-dessus du centre de l'île
+      
+      const baseScale = flowerScaleX;
+      flower.eventMode = 'static';
+      flower.cursor = 'pointer';
+      
+      flower.on('pointerenter', () => flower.scale.set(baseScale * 1.15));
+      flower.on('pointerleave', () => flower.scale.set(baseScale));
+      flower.on('pointerdown', () => this._openLocation('flower-island', 'Île aux Fleurs'));
+      
+      this.mapContainer.addChild(flower);
+      console.log('🌸 Mini île avec fleur créée');
+    } catch (err) {
+      console.error('Erreur chargement mini île/fleur:', err);
     }
   }
   
