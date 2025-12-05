@@ -96,11 +96,15 @@ import { AudioManager } from './core/AudioManager.js';
             marketWindow.open();
             return;
         }
-        if (id === 'farm-3') {
+        if (id === 'merchant') {
+            marketWindow.open();
+            return;
+        }
+        if (id === 'upgrader') {
             fabricWindow.open();
             return;
         }
-        if (id === 'farm-6'){
+        if (id === 'fisherman'){
             fishingWindow.open();
             return;
         }

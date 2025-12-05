@@ -32,6 +32,11 @@ export class MetricsBar extends Container {
         name: 'Bois',
         color: 0x8b4513,
         icon: '🪵'
+      },
+      water: {
+        name: 'Eau',
+        color: 0x3399ff,
+        icon: '💧'
       }
     };
 

@@ -279,6 +279,9 @@ export class FabricWindow extends PIXI.Container {
         electricity: building.electricityBonus
       });
 
+      // Activer le bâtiment
+      this.gameMetrics.buildBuilding(building.id);
+
       console.log(`✅ ${building.name} construit ! +${building.electricityBonus} ⚡`);
 
       // Feedback visuel

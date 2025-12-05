@@ -215,6 +215,16 @@ export class FarmScene extends PIXI.Container {
           continue;
         }
         
+        // Ferme 3 = remplacée par l'upgrader
+        if (index === 3) {
+          continue;
+        }
+        
+        // Ferme 6 = remplacée par le pêcheur sur le pont
+        if (index === 6) {
+          continue;
+        }
+        
         const btn = new Button({
           label: `Ferme ${index}`,
           x, y,
@@ -274,6 +284,8 @@ export class FarmScene extends PIXI.Container {
 
   /**
    * Crée le bouton vélo qui génère de l'électricité au clic
+   * Consomme de la nourriture pour produire de l'électricité
+   * Doit être acheté via FabricWindow pour être actif
    */
   async _createBikeButton(x, y) {
     try {
@@ -291,6 +303,11 @@ export class FarmScene extends PIXI.Container {
       
       // Sauvegarder l'échelle de base
       const baseScale = scaleX;
+      const foodCost = 2; // Coût en nourriture
+      
+      // Par défaut inactif (grisé)
+      bike.alpha = 0.4;
+      bike.tint = 0x888888;
       
       // Interactivité
       bike.eventMode = 'static';
@@ -305,17 +322,53 @@ export class FarmScene extends PIXI.Container {
         bike.scale.set(baseScale);
       });
       
-      // Clic = ajouter électricité
+      // Clic = consommer nourriture et ajouter électricité (si acheté)
       bike.on('pointerdown', () => {
         if (this.gameMetrics) {
-          this.gameMetrics.addToMetric('electricity', 5);
-          console.log('⚡ +5 électricité !');
+          // Vérifier si le vélo est construit
+          if (!this.gameMetrics.hasBuilding('bike')) {
+            console.log('🚲 Vélo non construit ! Achetez-le via l\'Améliorateur.');
+            bike.scale.set(baseScale * 0.9);
+            setTimeout(() => bike.scale.set(baseScale * 1.15), 100);
+            return;
+          }
           
-          // Animation de feedback
-          bike.scale.set(baseScale * 0.9);
-          setTimeout(() => bike.scale.set(baseScale * 1.15), 100);
+          const currentFood = this.gameMetrics.getMetric('food');
+          if (currentFood >= foodCost) {
+            // Consommer la nourriture et ajouter l'électricité
+            this.gameMetrics.addToMetric('food', -foodCost);
+            this.gameMetrics.addToMetric('electricity', 5);
+            console.log(`⚡ +5 électricité ! (-${foodCost} 🥕)`);
+            
+            // Animation de feedback
+            bike.scale.set(baseScale * 0.9);
+            setTimeout(() => bike.scale.set(baseScale * 1.15), 100);
+          } else {
+            console.log(`🥕 Pas assez de nourriture ! (${currentFood}/${foodCost} requis)`);
+            // Animation de refus
+            bike.tint = 0xff6666;
+            setTimeout(() => bike.tint = 0xffffff, 200);
+          }
         }
       });
+      
+      // Écouter l'activation du bâtiment
+      if (this.gameMetrics) {
+        // Vérifier si déjà construit
+        if (this.gameMetrics.hasBuilding('bike')) {
+          bike.alpha = 1;
+          bike.tint = 0xffffff;
+        }
+        
+        // Écouter les futures constructions
+        this.gameMetrics.addBuildingListener((buildingId) => {
+          if (buildingId === 'bike') {
+            bike.alpha = 1;
+            bike.tint = 0xffffff;
+            console.log('🚲 Vélo activé !');
+          }
+        });
+      }
       
       this.mapContainer.addChild(bike);
       console.log('🚲 Vélo créé');
@@ -402,6 +455,7 @@ export class FarmScene extends PIXI.Container {
 
   /**
    * Crée le pêcheur (fisherman) cliquable sur le pont
+   * Cliquer sur le pêcheur ouvre la fenêtre de pêche
    */
   async _createFishermanButton(bridgeX, bridgeY) {
     try {
@@ -435,7 +489,7 @@ export class FarmScene extends PIXI.Container {
         fisherman.scale.set(baseScale);
       });
       
-      // Clic = ouvrir le lieu pêcheur
+      // Clic = ouvrir la fenêtre de pêche
       fisherman.on('pointerdown', () => {
         this._openLocation('fisherman', 'Pêcheur');
       });
@@ -542,6 +596,8 @@ export class FarmScene extends PIXI.Container {
 
   /**
    * Crée l'éolienne en haut au milieu de l'île
+   * Génère de l'électricité automatiquement une fois achetée
+   * Doit être achetée via FabricWindow pour être active
    */
   async _createWindTurbine() {
     try {
@@ -557,12 +613,49 @@ export class FarmScene extends PIXI.Container {
       turbine.y = ZONES.LAND.Y + ZONES.LAND.HEIGHT * 0.15;
       
       const baseScale = scaleX;
+      
+      // Par défaut inactive (grisée)
+      turbine.alpha = 0.4;
+      turbine.tint = 0x888888;
+      
       turbine.eventMode = 'static';
       turbine.cursor = 'pointer';
       
       turbine.on('pointerenter', () => turbine.scale.set(baseScale * 1.15));
       turbine.on('pointerleave', () => turbine.scale.set(baseScale));
-      turbine.on('pointerdown', () => this._openLocation('wind-turbine', 'Éolienne'));
+      turbine.on('pointerdown', () => {
+        if (this.gameMetrics) {
+          if (!this.gameMetrics.hasBuilding('windmill')) {
+            console.log('🌬️ Éolienne non construite ! Achetez-la via l\'Améliorateur.');
+            turbine.scale.set(baseScale * 0.9);
+            setTimeout(() => turbine.scale.set(baseScale * 1.15), 100);
+            return;
+          }
+          // L'éolienne génère de l'électricité automatiquement, pas besoin de clic
+          this.gameMetrics.addToMetric('electricity', 10);
+          console.log('⚡ +10 électricité (éolienne) !');
+          turbine.scale.set(baseScale * 0.9);
+          setTimeout(() => turbine.scale.set(baseScale * 1.15), 100);
+        }
+      });
+      
+      // Écouter l'activation du bâtiment
+      if (this.gameMetrics) {
+        // Vérifier si déjà construit
+        if (this.gameMetrics.hasBuilding('windmill')) {
+          turbine.alpha = 1;
+          turbine.tint = 0xffffff;
+        }
+        
+        // Écouter les futures constructions
+        this.gameMetrics.addBuildingListener((buildingId) => {
+          if (buildingId === 'windmill') {
+            turbine.alpha = 1;
+            turbine.tint = 0xffffff;
+            console.log('🌬️ Éolienne activée !');
+          }
+        });
+      }
       
       this.mapContainer.addChild(turbine);
       console.log('🌬️ Éolienne créée');
@@ -596,10 +689,12 @@ export class FarmScene extends PIXI.Container {
 
   /**
    * Crée la grille 3x3 de parcelles en haut à gauche de l'île
+   * Cliquer sur une parcelle ajoute de la nourriture et affiche une tomate
    */
   async _createParcelGrid() {
     try {
-      const texture = await PIXI.Assets.load('/assets/svg/Parcel.svg');
+      const parcelTexture = await PIXI.Assets.load('/assets/svg/Parcel.svg');
+      const tomatoTexture = await PIXI.Assets.load('/assets/svg/Tomato.svg');
       const targetSize = 30;
       const spacing = 35;
       const startX = ZONES.LAND.X + ZONES.LAND.WIDTH * 0.25;
@@ -607,13 +702,52 @@ export class FarmScene extends PIXI.Container {
       
       for (let row = 0; row < 3; row++) {
         for (let col = 0; col < 3; col++) {
-          const parcel = new PIXI.Sprite(texture);
-          const scaleX = targetSize / texture.width;
-          const scaleY = targetSize / texture.height;
+          const parcel = new PIXI.Sprite(parcelTexture);
+          const scaleX = targetSize / parcelTexture.width;
+          const scaleY = targetSize / parcelTexture.height;
           parcel.scale.set(scaleX, scaleY);
           parcel.anchor.set(0.5, 0.5);
           parcel.x = startX + col * spacing;
           parcel.y = startY + row * spacing;
+          
+          const baseScale = scaleX;
+          parcel.eventMode = 'static';
+          parcel.cursor = 'pointer';
+          
+          parcel.on('pointerenter', () => parcel.scale.set(baseScale * 1.15));
+          parcel.on('pointerleave', () => parcel.scale.set(baseScale));
+          parcel.on('pointerdown', () => {
+            if (this.gameMetrics) {
+              this.gameMetrics.addToMetric('food', 5);
+              console.log('🍅 +5 nourriture !');
+              
+              // Animation feedback
+              parcel.scale.set(baseScale * 0.9);
+              setTimeout(() => parcel.scale.set(baseScale * 1.15), 100);
+              
+              // Afficher une tomate temporairement
+              const tomato = new PIXI.Sprite(tomatoTexture);
+              const tomatoSize = 20;
+              tomato.scale.set(tomatoSize / tomatoTexture.width, tomatoSize / tomatoTexture.height);
+              tomato.anchor.set(0.5, 0.5);
+              tomato.x = parcel.x;
+              tomato.y = parcel.y - 20;
+              tomato.alpha = 1;
+              this.mapContainer.addChild(tomato);
+              
+              // Animation de la tomate qui monte et disparaît
+              let animY = tomato.y;
+              const animInterval = setInterval(() => {
+                animY -= 2;
+                tomato.y = animY;
+                tomato.alpha -= 0.05;
+                if (tomato.alpha <= 0) {
+                  clearInterval(animInterval);
+                  this.mapContainer.removeChild(tomato);
+                }
+              }, 30);
+            }
+          });
           
           this.mapContainer.addChild(parcel);
         }
@@ -626,6 +760,7 @@ export class FarmScene extends PIXI.Container {
 
   /**
    * Crée la grille 3x3 d'arbres en bas à gauche de l'île
+   * Cliquer sur un arbre ajoute du bois
    */
   async _createTreeGrid() {
     try {
@@ -645,6 +780,23 @@ export class FarmScene extends PIXI.Container {
           tree.x = startX + col * spacing;
           tree.y = startY + row * spacing;
           
+          const baseScale = scaleX;
+          tree.eventMode = 'static';
+          tree.cursor = 'pointer';
+          
+          tree.on('pointerenter', () => tree.scale.set(baseScale * 1.15));
+          tree.on('pointerleave', () => tree.scale.set(baseScale));
+          tree.on('pointerdown', () => {
+            if (this.gameMetrics) {
+              this.gameMetrics.addToMetric('wood', 5);
+              console.log('🪵 +5 bois !');
+              
+              // Animation feedback
+              tree.scale.set(baseScale * 0.9);
+              setTimeout(() => tree.scale.set(baseScale * 1.15), 100);
+            }
+          });
+          
           this.mapContainer.addChild(tree);
         }
       }
@@ -656,6 +808,7 @@ export class FarmScene extends PIXI.Container {
 
   /**
    * Crée le puits au-dessus des arbres
+   * Cliquer sur le puits consomme de l'électricité et ajoute de l'eau
    */
   async _createWell() {
     try {
@@ -671,12 +824,33 @@ export class FarmScene extends PIXI.Container {
       well.y = ZONES.LAND.Y + ZONES.LAND.HEIGHT * 0.58;     // Au-dessus des arbres
       
       const baseScale = scaleX;
+      const electricityCost = 2; // Coût en électricité
+      
       well.eventMode = 'static';
       well.cursor = 'pointer';
       
       well.on('pointerenter', () => well.scale.set(baseScale * 1.15));
       well.on('pointerleave', () => well.scale.set(baseScale));
-      well.on('pointerdown', () => this._openLocation('well', 'Puits'));
+      well.on('pointerdown', () => {
+        if (this.gameMetrics) {
+          const currentElectricity = this.gameMetrics.getMetric('electricity');
+          if (currentElectricity >= electricityCost) {
+            // Consommer l'électricité et ajouter l'eau
+            this.gameMetrics.addToMetric('electricity', -electricityCost);
+            this.gameMetrics.addToMetric('water', 5);
+            console.log(`💧 +5 eau ! (-${electricityCost} ⚡)`);
+            
+            // Animation feedback
+            well.scale.set(baseScale * 0.9);
+            setTimeout(() => well.scale.set(baseScale * 1.15), 100);
+          } else {
+            console.log(`⚡ Pas assez d'électricité ! (${currentElectricity}/${electricityCost} requis)`);
+            // Animation de refus
+            well.tint = 0xff6666;
+            setTimeout(() => well.tint = 0xffffff, 200);
+          }
+        }
+      });
       
       this.mapContainer.addChild(well);
       console.log('🪣 Puits créé');
@@ -686,7 +860,8 @@ export class FarmScene extends PIXI.Container {
   }
 
   /**
-   * Crée une mini île avec une fleur Stage 0 dessus
+   * Crée une mini île avec une fleur évolutive dessus
+   * Cliquer consomme de l'eau pour faire évoluer la fleur (Stage 0 → 1 → 2 → 3)
    */
   async _createMiniIslandWithFlower(x, y) {
     try {
@@ -704,13 +879,24 @@ export class FarmScene extends PIXI.Container {
       
       this.mapContainer.addChild(miniIsland);
       
-      // Charger la fleur Stage 0 par-dessus
-      const flowerTexture = await PIXI.Assets.load('/assets/svg/Stage_0_Flower.svg');
-      const flower = new PIXI.Sprite(flowerTexture);
+      // Charger toutes les textures de fleurs
+      const flowerTextures = [
+        await PIXI.Assets.load('/assets/svg/Stage_0_Flower.svg'),
+        await PIXI.Assets.load('/assets/svg/Stage_1_Flower.svg'),
+        await PIXI.Assets.load('/assets/svg/Stage_2_Flower.svg'),
+        await PIXI.Assets.load('/assets/svg/Stage_3_Flower.svg'),
+      ];
+      
+      // État actuel de la fleur
+      let currentStage = 0;
+      const waterCost = 10; // Coût en eau pour améliorer
+      
+      // Créer le sprite de la fleur
+      const flower = new PIXI.Sprite(flowerTextures[currentStage]);
       
       const flowerSize = 35;
-      const flowerScaleX = flowerSize / flowerTexture.width;
-      const flowerScaleY = flowerSize / flowerTexture.height;
+      const flowerScaleX = flowerSize / flowerTextures[currentStage].width;
+      const flowerScaleY = flowerSize / flowerTextures[currentStage].height;
       flower.scale.set(flowerScaleX, flowerScaleY);
       flower.anchor.set(0.5, 0.5);
       flower.x = x;
@@ -722,10 +908,40 @@ export class FarmScene extends PIXI.Container {
       
       flower.on('pointerenter', () => flower.scale.set(baseScale * 1.15));
       flower.on('pointerleave', () => flower.scale.set(baseScale));
-      flower.on('pointerdown', () => this._openLocation('flower-island', 'Île aux Fleurs'));
+      flower.on('pointerdown', () => {
+        if (this.gameMetrics && currentStage < 3) {
+          const currentWater = this.gameMetrics.getMetric('water');
+          if (currentWater >= waterCost) {
+            // Consommer l'eau
+            this.gameMetrics.addToMetric('water', -waterCost);
+            
+            // Passer au stage suivant
+            currentStage++;
+            flower.texture = flowerTextures[currentStage];
+            
+            // Recalculer l'échelle pour la nouvelle texture
+            const newScaleX = flowerSize / flowerTextures[currentStage].width;
+            const newScaleY = flowerSize / flowerTextures[currentStage].height;
+            flower.scale.set(newScaleX, newScaleY);
+            
+            console.log(`🌸 Fleur améliorée au stage ${currentStage} ! (-${waterCost} eau)`);
+            
+            // Animation feedback
+            flower.scale.set(newScaleX * 1.3);
+            setTimeout(() => flower.scale.set(newScaleX), 200);
+          } else {
+            console.log(`💧 Pas assez d'eau ! (${currentWater}/${waterCost} requis)`);
+            // Animation de refus
+            flower.tint = 0xff6666;
+            setTimeout(() => flower.tint = 0xffffff, 200);
+          }
+        } else if (currentStage >= 3) {
+          console.log('🌸 Fleur au niveau maximum !');
+        }
+      });
       
       this.mapContainer.addChild(flower);
-      console.log('🌸 Mini île avec fleur créée');
+      console.log('🌸 Mini île avec fleur évolutive créée');
     } catch (err) {
       console.error('Erreur chargement mini île/fleur:', err);
     }

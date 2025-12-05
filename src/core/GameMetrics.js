@@ -33,10 +33,24 @@ export class GameMetrics {
         maxValue: 100,
         actualValue: 0,
         level: 1
+      },
+      water: {
+        name: 'Eau',
+        description: 'Réserves d\'eau disponibles',
+        maxValue: 100,
+        actualValue: 0,
+        level: 1
       }
     };
 
+    // Bâtiments construits (vélo, éolienne, etc.)
+    this.buildings = {
+      bike: false,
+      windmill: false
+    };
+
     this.listeners = [];
+    this.buildingListeners = [];
   }
 
   /**
@@ -45,6 +59,14 @@ export class GameMetrics {
    */
   addListener(callback) {
     this.listeners.push(callback);
+  }
+
+  /**
+   * Ajoute un écouteur pour les constructions de bâtiments
+   * @param {Function} callback - Fonction appelée lors des constructions
+   */
+  addBuildingListener(callback) {
+    this.buildingListeners.push(callback);
   }
 
   /**
@@ -65,6 +87,29 @@ export class GameMetrics {
     this.listeners.forEach(callback => {
       callback(this.metrics);
     });
+  }
+
+  /**
+   * Marque un bâtiment comme construit
+   * @param {string} buildingId - ID du bâtiment (bike, windmill)
+   */
+  buildBuilding(buildingId) {
+    if (this.buildings.hasOwnProperty(buildingId)) {
+      this.buildings[buildingId] = true;
+      this.buildingListeners.forEach(callback => {
+        callback(buildingId, this.buildings);
+      });
+      console.log(`🏗️ Bâtiment ${buildingId} activé !`);
+    }
+  }
+
+  /**
+   * Vérifie si un bâtiment est construit
+   * @param {string} buildingId - ID du bâtiment
+   * @returns {boolean}
+   */
+  hasBuilding(buildingId) {
+    return this.buildings[buildingId] === true;
   }
 
   /**
