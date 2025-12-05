@@ -3,12 +3,12 @@ import { InputManager } from './core/InputManager.js';
 
 export function startGame(app) {
   // Configuration de la taille de la map (plus grande que l'écran pour permettre le scroll)
-  const MAP_WIDTH = 1600;  // Largeur de la map
-  const MAP_HEIGHT = 1200; // Hauteur de la map
+  const MAP_WIDTH = 2400;  // Largeur de la map
+  const MAP_HEIGHT = 1800; // Hauteur de la map
   
   // Configuration des zones de la map
-  const CLOUD_MARGIN = 80;   // Épaisseur des nuages (blanc)
-  const WATER_MARGIN = 120;  // Épaisseur de l'eau (bleu)
+  const CLOUD_MARGIN = 100;  // Épaisseur des nuages (blanc)
+  const WATER_MARGIN = 150;  // Épaisseur de l'eau (bleu)
   
   // Zones calculées
   const WATER_X = CLOUD_MARGIN;
