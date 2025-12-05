@@ -209,7 +209,7 @@ export class FarmScene extends PIXI.Container {
     const waterLocations = [
       { x: ZONES.WATER.X + ZONES.WATER.WIDTH * 0.3, y: ZONES.WATER.Y + MARGINS.WATER / 2 + 20, name: 'Île Nord-Ouest', id: 'island-nw' },
       { x: ZONES.WATER.X + ZONES.WATER.WIDTH * 0.7, y: ZONES.WATER.Y + MARGINS.WATER / 2 + 20, name: 'Île Nord-Est', id: 'island-ne' },
-      { x: ZONES.WATER.X + MARGINS.WATER / 2, y: ZONES.WATER.Y + ZONES.WATER.HEIGHT * 0.5, name: 'Port Ouest', id: 'port-west' },
+      { x: ZONES.WATER.X + MARGINS.WATER / 2, y: ZONES.WATER.Y + ZONES.WATER.HEIGHT * 0.5, name: '8ème Continent', id: '8eme-continent' },
       { x: ZONES.WATER.X + ZONES.WATER.WIDTH - MARGINS.WATER / 2, y: ZONES.WATER.Y + ZONES.WATER.HEIGHT * 0.5, name: 'Port Est', id: 'port-east' },
       { x: ZONES.WATER.X + ZONES.WATER.WIDTH * 0.3, y: ZONES.WATER.Y + ZONES.WATER.HEIGHT - MARGINS.WATER / 2 - 20, name: 'Île Sud-Ouest', id: 'island-sw' },
       { x: ZONES.WATER.X + ZONES.WATER.WIDTH * 0.7, y: ZONES.WATER.Y + ZONES.WATER.HEIGHT - MARGINS.WATER / 2 - 20, name: 'Île Sud-Est', id: 'island-se' },

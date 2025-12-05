@@ -1,6 +1,10 @@
 import { createApp, mountApp } from './core/App.js';
+import { SceneManager } from './core/SceneManager.js';
 import { FarmScene } from './game/scenes/FarmScene.js';
+import { ContinentScene } from './game/scenes/ContinentScene.js';
 import { MiniGameScene } from './game/scenes/MiniGameScene.js';
+import { CollectionScene } from './game/scenes/CollectionScene.js';
+import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
 
 (async () => {
     // Créer et initialiser l'application PixiJS
@@ -9,27 +13,86 @@ import { MiniGameScene } from './game/scenes/MiniGameScene.js';
 
     console.log('Pixi app started');
 
-    // Créer les scènes
+    // Démarrer le système de remplissage passif des zones de collecte
+    CollectionZoneManager.start();
+    console.log('♻️ Zones de collecte actives - remplissage passif démarré');
+
+    // Créer le gestionnaire de scènes
+    const sceneManager = new SceneManager(app);
+
+    // Créer la scène mini-jeu (overlay)
     const miniGameScene = new MiniGameScene(app, () => {
-      // Callback retour : fermer mini-jeu, afficher carte
+      // Callback retour : fermer mini-jeu
       miniGameScene.close();
-      farmScene.show();
+      const currentScene = sceneManager.getCurrentScene();
+      if (currentScene) {
+        currentScene.show();
+      }
     });
-    
+
+    // Créer la scène de collecte de déchets (overlay)
+    const collectionScene = new CollectionScene(app, () => {
+      // Callback retour : fermer collecte, revenir à la scène courante
+      const currentScene = sceneManager.getCurrentScene();
+      if (currentScene) {
+        currentScene.show();
+      }
+    });
+
+    // Créer la scène principale (ferme/île)
     const farmScene = new FarmScene(app, (id, name) => {
-      // Callback ouverture lieu : cacher carte, ouvrir mini-jeu
+      // Si c'est le 8ème continent, naviguer vers cette scène
+      if (id === '8eme-continent') {
+        sceneManager.goTo('continent');
+        return;
+      }
+      
+      // Sinon, ouvrir le mini-jeu
       farmScene.hide();
       miniGameScene.open(id, name);
     });
 
-    // Ajouter les scènes au stage
-    app.stage.addChild(farmScene);
+    // Créer la scène du 8ème Continent
+    const continentScene = new ContinentScene(
+      app,
+      (id, name) => {
+        // Zones de collecte → ouvrir la scène de collecte
+        if (id.startsWith('collection-')) {
+          continentScene.hide();
+          collectionScene.open(id, name);
+          return;
+        }
+        
+        // Autres lieux → ouvrir le mini-jeu générique
+        continentScene.hide();
+        miniGameScene.open(id, name);
+      },
+      (targetScene) => {
+        // Naviguer vers une autre scène (retour à la ferme)
+        if (targetScene === 'farm') {
+          sceneManager.goTo('farm');
+        }
+      }
+    );
+
+    // Enregistrer les scènes
+    sceneManager.register('farm', farmScene);
+    sceneManager.register('continent', continentScene);
+
+    // Ajouter les overlays par-dessus
     app.stage.addChild(miniGameScene);
+    app.stage.addChild(collectionScene);
+
+    // Afficher la scène de départ
+    sceneManager.showImmediate('farm');
 
     console.log('Daisyland initialisé !');
 
     // Exposer pour le debug
     window.app = app;
+    window.sceneManager = sceneManager;
     window.farmScene = farmScene;
+    window.continentScene = continentScene;
     window.miniGameScene = miniGameScene;
+    window.collectionScene = collectionScene;
 })();
