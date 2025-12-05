@@ -19,7 +19,7 @@ export class InputManager {
     
     // Configuration du zoom
     this.zoomLevel = 1;
-    this.minZoom = 0.5;
+    this.minZoom = 0.5;  // Sera recalculé dynamiquement
     this.maxZoom = 2;
     this.zoomStep = 0.1;
     
@@ -77,11 +77,37 @@ export class InputManager {
   setMapSize(mapWidth, mapHeight) {
     this.mapWidth = mapWidth;
     this.mapHeight = mapHeight;
+    
+    // Calculer le zoom minimum pour que la map couvre toujours tout l'écran
+    this._updateMinZoom();
     this._updateBounds();
   }
   
   /**
+   * Calcule le zoom minimum pour que la map remplisse toujours l'écran
+   * (on ne peut pas voir derrière les nuages)
+   */
+  _updateMinZoom() {
+    const screenWidth = this.app.renderer.width;
+    const screenHeight = this.app.renderer.height;
+    
+    // Le zoom minimum est celui qui permet à la map de couvrir tout l'écran
+    const minZoomX = screenWidth / this.mapWidth;
+    const minZoomY = screenHeight / this.mapHeight;
+    
+    // Prendre le plus grand des deux pour couvrir les deux dimensions
+    this.minZoom = Math.max(minZoomX, minZoomY);
+    
+    // Si le zoom actuel est en dessous du nouveau minimum, l'ajuster
+    if (this.zoomLevel < this.minZoom) {
+      this.zoomLevel = this.minZoom;
+      this.target.scale.set(this.zoomLevel);
+    }
+  }
+  
+  /**
    * Met à jour les limites en fonction du zoom actuel
+   * La map doit toujours couvrir tout l'écran (pas de vide visible)
    */
   _updateBounds() {
     const screenWidth = this.app.renderer.width;
@@ -89,36 +115,15 @@ export class InputManager {
     const scaledMapWidth = this.mapWidth * this.zoomLevel;
     const scaledMapHeight = this.mapHeight * this.zoomLevel;
     
-    // Si la map zoomée est plus petite que l'écran, centrer
-    if (scaledMapWidth <= screenWidth) {
-      const centerX = (screenWidth - scaledMapWidth) / 2;
-      this.bounds = {
-        ...this.bounds,
-        minX: centerX,
-        maxX: centerX
-      };
-    } else {
-      this.bounds = {
-        ...this.bounds,
-        minX: screenWidth - scaledMapWidth,
-        maxX: 0
-      };
-    }
-    
-    if (scaledMapHeight <= screenHeight) {
-      const centerY = (screenHeight - scaledMapHeight) / 2;
-      this.bounds = {
-        ...this.bounds,
-        minY: centerY,
-        maxY: centerY
-      };
-    } else {
-      this.bounds = {
-        ...this.bounds,
-        minY: screenHeight - scaledMapHeight,
-        maxY: 0
-      };
-    }
+    // Les limites empêchent de voir au-delà des bords de la map
+    // minX/minY = position max vers la gauche/haut (valeurs négatives)
+    // maxX/maxY = position max vers la droite/bas (0 = bord gauche/haut de la map au bord de l'écran)
+    this.bounds = {
+      minX: screenWidth - scaledMapWidth,
+      maxX: 0,
+      minY: screenHeight - scaledMapHeight,
+      maxY: 0
+    };
   }
   
   /**

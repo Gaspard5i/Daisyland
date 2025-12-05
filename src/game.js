@@ -359,26 +359,18 @@ export function startGame(app) {
 
   // Resize handler
   function onResize() {
-    // Mettre à jour les limites de déplacement selon la nouvelle taille d'écran
+    // Mettre à jour le zoom minimum et les limites selon la nouvelle taille d'écran
+    // Cela ajustera automatiquement le zoom si nécessaire pour couvrir l'écran
     inputManager.setMapSize(MAP_WIDTH, MAP_HEIGHT);
     
-    // Garder la map dans les limites après resize
+    // Clamper la position actuelle aux nouvelles limites
     const screenWidth = app.renderer.width;
     const screenHeight = app.renderer.height;
     const scaledMapWidth = MAP_WIDTH * inputManager.getZoom();
     const scaledMapHeight = MAP_HEIGHT * inputManager.getZoom();
     
-    // Clamper la position actuelle aux nouvelles limites
-    if (scaledMapWidth <= screenWidth) {
-      mapContainer.x = (screenWidth - scaledMapWidth) / 2;
-    } else {
-      mapContainer.x = Math.max(screenWidth - scaledMapWidth, Math.min(0, mapContainer.x));
-    }
-    if (scaledMapHeight <= screenHeight) {
-      mapContainer.y = (screenHeight - scaledMapHeight) / 2;
-    } else {
-      mapContainer.y = Math.max(screenHeight - scaledMapHeight, Math.min(0, mapContainer.y));
-    }
+    mapContainer.x = Math.max(screenWidth - scaledMapWidth, Math.min(0, mapContainer.x));
+    mapContainer.y = Math.max(screenHeight - scaledMapHeight, Math.min(0, mapContainer.y));
     
     // Update mini-game background size if visible
     if (miniGameContainer.visible && miniGameContainer.children.length > 0) {
