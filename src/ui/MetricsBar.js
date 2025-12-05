@@ -5,10 +5,14 @@
 
 import { Container, Graphics, Text } from 'pixi.js';
 import { COLORS, FONTS } from '../utils/Constants.js';
+import { SaveManager } from '../core/SaveManager.js';
+import { Button } from './Button.js';
 
 export class MetricsBar extends Container {
   constructor() {
     super();
+
+    this.saveManager = new SaveManager();
 
     // Configuration des couleurs et icônes pour chaque métrique
     this.metricConfig = {
@@ -38,6 +42,9 @@ export class MetricsBar extends Container {
     this.padding = 18;
     this.spacing = 58;
     this.iconSize = 20;
+    this.buttonHeight = 40;
+    this.saveButtonTopMargin = 15; // Nouvelle marge au-dessus du bouton de sauvegarde
+    this.buttonMargin = 10;
 
     // Position sera mise à jour dans updatePosition()
     this._updatePosition();
@@ -60,9 +67,10 @@ export class MetricsBar extends Container {
 
     this.background = new Graphics();
 
-    // Calculer la hauteur basée sur le nombre de métriques
+    // Calculer la hauteur basée sur le nombre de métriques + bouton sauvegarde
     const metricsCount = Object.keys(this.metrics).length || 4;
-    const backgroundHeight = metricsCount * this.spacing + this.padding * 2;
+    const contentHeight = metricsCount * this.spacing + this.saveButtonTopMargin + this.buttonHeight + this.buttonMargin;
+    const backgroundHeight = contentHeight + this.padding; // Ajouter le padding pour le bas du background
 
     // Fond semi-transparent
     this.background.rect(
@@ -84,6 +92,50 @@ export class MetricsBar extends Container {
 
     // Ajouter le background en premier pour qu'il soit derrière les barres
     this.addChildAt(this.background, 0);
+  }
+
+  createSaveButton() {
+      if (this.saveBtn) {
+          this.removeChild(this.saveBtn);
+      }
+
+      const metricsCount = Object.keys(this.metrics).length;
+      // Position Y du bouton : après les métriques, plus la marge supérieure
+      const yPos = metricsCount * this.spacing + this.saveButtonTopMargin;
+
+      this.saveBtn = new Button({
+          label: 'Sauvegarder',
+          x: this.barWidth / 2,
+          y: yPos,
+          width: 160,
+          height: this.buttonHeight,
+          onClick: () => this._onSave(),
+          showMarker: false
+      });
+
+      this.addChild(this.saveBtn);
+  }
+
+  _onSave() {
+      try {
+          // On passe `this` (l'instance de MetricsBar) car elle a la méthode `getAllMetrics()`
+          // nécessaire à SaveManager.serializegameMetrics
+          const binary = this.saveManager.serializegameMetrics(this);
+          const blob = new Blob([binary], { type: 'application/octet-stream' });
+          const url = URL.createObjectURL(blob);
+          
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'savegame.daisyland'; // Changed to .save extension
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          console.log('Partie sauvegardée !');
+      } catch (e) {
+          console.error('Erreur lors de la sauvegarde :', e);
+      }
   }
 
   createBars() {
@@ -154,6 +206,7 @@ export class MetricsBar extends Container {
       this.addChild(barContainer);
     });
 
+    this.createSaveButton();
     this.updateBars();
   }
 

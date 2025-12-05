@@ -3,11 +3,13 @@ import { SceneManager } from './core/SceneManager.js';
 import { FarmScene } from './game/scenes/FarmScene.js';
 import { ContinentScene } from './game/scenes/ContinentScene.js';
 import { MiniGameScene } from './game/scenes/MiniGameScene.js';
+import { MainMenuScene } from './game/scenes/MainMenuScene.js';
 import { GameMetrics } from './core/GameMetrics.js';
 import { MetricsBar } from './ui/MetricsBar.js';
 import { CollectionScene } from './game/scenes/CollectionScene.js';
 import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
 import { WasteManager } from './game/systems/WasteManager.js';
+import { SaveManager } from "./core/SaveManager.js";
 
 (async () => {
     const app = await createApp();
@@ -90,7 +92,29 @@ import { WasteManager } from './game/systems/WasteManager.js';
       }
     );
 
+    // Créer le menu principal
+    const mainMenuScene = new MainMenuScene(app, {
+      onNewGame: () => {
+        // Nouvelle partie : on s'assure que les métriques sont reset si nécessaire
+        // Ici on part du principe que c'est le premier lancement ou qu'on veut reset
+        // gameMetrics.reset(); // Si la méthode existe, sinon c'est déjà les valeurs par défaut au lancement
+        metricsBar.visible = true;
+        sceneManager.goTo('farm');
+      },
+      onLoadGame: (metrics) => {
+        // Charger partie : mettre à jour les métriques
+        console.log('Chargement de la sauvegarde...', metrics);
+        if (metrics) {
+            // Met à jour chaque métrique
+            gameMetrics.setMetrics(metrics);
+            metricsBar.visible = true;
+            sceneManager.goTo('farm');
+        }
+      }
+    });
+
     // Enregistrer les scènes dans le SceneManager
+    sceneManager.register('mainMenu', mainMenuScene);
     sceneManager.register('farm', farmScene);
     sceneManager.register('continent', continentScene);
 
@@ -100,9 +124,10 @@ import { WasteManager } from './game/systems/WasteManager.js';
 
     // Ajouter la barre de métriques tout en haut (toujours visible)
     app.stage.addChild(metricsBar);
+    metricsBar.visible = false; // Cacher initialement
 
-    // Afficher la scène de départ
-    sceneManager.showImmediate('farm');
+    // Afficher la scène de menu principal
+    sceneManager.showImmediate('mainMenu');
 
     console.log('Daisyland initialisé !');
 
