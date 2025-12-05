@@ -5,6 +5,7 @@ import { ContinentScene } from './game/scenes/ContinentScene.js';
 import { MiniGameScene } from './game/scenes/MiniGameScene.js';
 import { GameMetrics } from './core/GameMetrics.js';
 import { MetricsBar } from './ui/MetricsBar.js';
+import { UserBar } from './ui/UserBar.js';
 import { CollectionScene } from './game/scenes/CollectionScene.js';
 import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
 
@@ -93,6 +94,10 @@ import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
     app.stage.addChild(miniGameScene);
     app.stage.addChild(collectionScene);
 
+    // Ajouter la barre utilisateur en haut à gauche
+    const userBar = new UserBar();
+    app.stage.addChild(userBar);
+
     // Ajouter la barre de métriques tout en haut (toujours visible)
     app.stage.addChild(metricsBar);
 
@@ -105,6 +110,7 @@ import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
     window.app = app;
     window.sceneManager = sceneManager;
     window.gameMetrics = gameMetrics;
+    window.userBar = userBar;
     window.farmScene = farmScene;
     window.continentScene = continentScene;
     window.miniGameScene = miniGameScene;
