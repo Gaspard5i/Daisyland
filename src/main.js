@@ -6,16 +6,24 @@ import { MiniGameScene } from './game/scenes/MiniGameScene.js';
 import { MainMenuScene } from './game/scenes/MainMenuScene.js';
 import { GameMetrics } from './core/GameMetrics.js';
 import { MetricsBar } from './ui/MetricsBar.js';
+import { FabricWindow } from './ui/FabricWindow.js';
+import { MarketWindow } from './ui/MarketWindow.js';
+import { FishingWindow } from './ui/FishingWindow.js';
+import { UserBar } from './ui/UserBar.js';
 import { CollectionScene } from './game/scenes/CollectionScene.js';
 import { CollectionZoneManager } from './game/systems/CollectionZoneManager.js';
 import { WasteManager } from './game/systems/WasteManager.js';
 import { SaveManager } from "./core/SaveManager.js";
+import { initTooltip } from './ui/Tooltip.js';
 
 (async () => {
     const app = await createApp();
     mountApp(app, 'app');
 
     console.log('Pixi app started');
+
+    // Initialiser le système de tooltips en premier (nécessaire avant de créer les UI)
+    initTooltip(app.stage);
 
     // Initialiser les métriques du jeu
     const gameMetrics = new GameMetrics();
@@ -30,6 +38,20 @@ import { SaveManager } from "./core/SaveManager.js";
       gameMetrics.setMetric('waste', totalWaste);
     });
 
+    // Fenêtres UI (modales) - créées en premier pour être disponibles dans les callbacks
+    const fabricWindow = new FabricWindow(app, () => {
+      console.log('Fabric window closed');
+    }, gameMetrics);
+
+    const marketWindow = new MarketWindow(app, () => {
+      console.log('Market window closed');
+    }, gameMetrics);
+
+    const fishingWindow = new FishingWindow(app, () => {
+      console.log('Fishing window closed');
+    }, gameMetrics);
+
+    // Créer les scènes
     // Démarrer le système de remplissage passif des zones de collecte
     CollectionZoneManager.start();
     console.log('♻️ Zones de collecte actives - remplissage passif démarré');
@@ -45,7 +67,7 @@ import { SaveManager } from "./core/SaveManager.js";
       if (currentScene) {
         currentScene.show();
       }
-    });
+    }, gameMetrics);
 
     // Créer la scène de collecte de déchets (overlay)
     const collectionScene = new CollectionScene(app, () => {
@@ -58,6 +80,20 @@ import { SaveManager } from "./core/SaveManager.js";
 
     // Créer la scène principale (ferme/île)
     const farmScene = new FarmScene(app, (id, name) => {
+
+        if (id === 'port-east') {
+            marketWindow.open();
+            return;
+        }
+        if (id === 'farm-3') {
+            fabricWindow.open();
+            return;
+        }
+        if (id === 'farm-6'){
+            fishingWindow.open();
+            return;
+        }
+
       // Si c'est le 8ème continent, naviguer vers cette scène
       if (id === '8eme-continent') {
         sceneManager.goTo('continent');
@@ -122,9 +158,24 @@ import { SaveManager } from "./core/SaveManager.js";
     app.stage.addChild(miniGameScene);
     app.stage.addChild(collectionScene);
 
+    // Ajouter la barre utilisateur en haut à gauche
+    const userBar = new UserBar();
+    app.stage.addChild(userBar);
+
     // Ajouter la barre de métriques tout en haut (toujours visible)
     app.stage.addChild(metricsBar);
     metricsBar.visible = false; // Cacher initialement
+
+    app.stage.addChild(fabricWindow);
+    app.stage.addChild(marketWindow);
+    app.stage.addChild(fishingWindow);
+
+    // Exposer les fenêtres globalement pour le debug (optionnel)
+    window.gameWindows = {
+      fabric: fabricWindow,
+      market: marketWindow,
+      fishing: fishingWindow,
+    };
 
     // Afficher la scène de menu principal
     sceneManager.showImmediate('mainMenu');
@@ -135,6 +186,7 @@ import { SaveManager } from "./core/SaveManager.js";
     window.app = app;
     window.sceneManager = sceneManager;
     window.gameMetrics = gameMetrics;
+    window.userBar = userBar;
     window.farmScene = farmScene;
     window.continentScene = continentScene;
     window.miniGameScene = miniGameScene;
