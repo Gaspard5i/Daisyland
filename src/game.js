@@ -29,6 +29,15 @@ export function startGame(app) {
   // Initialiser le gestionnaire d'entrées pour le drag de la map
   const inputManager = new InputManager(app, mapContainer);
   inputManager.setMapSize(MAP_WIDTH, MAP_HEIGHT);
+  
+  // Centrer la map au démarrage (vue au centre de la map)
+  function centerMap() {
+    const screenWidth = app.renderer.width;
+    const screenHeight = app.renderer.height;
+    mapContainer.x = (screenWidth - MAP_WIDTH) / 2;
+    mapContainer.y = (screenHeight - MAP_HEIGHT) / 2;
+  }
+  centerMap();
 
   // Background (the "map") - avec couches nuages → eau → terre
   const bg = new PIXI.Graphics();
@@ -352,6 +361,24 @@ export function startGame(app) {
   function onResize() {
     // Mettre à jour les limites de déplacement selon la nouvelle taille d'écran
     inputManager.setMapSize(MAP_WIDTH, MAP_HEIGHT);
+    
+    // Garder la map dans les limites après resize
+    const screenWidth = app.renderer.width;
+    const screenHeight = app.renderer.height;
+    const scaledMapWidth = MAP_WIDTH * inputManager.getZoom();
+    const scaledMapHeight = MAP_HEIGHT * inputManager.getZoom();
+    
+    // Clamper la position actuelle aux nouvelles limites
+    if (scaledMapWidth <= screenWidth) {
+      mapContainer.x = (screenWidth - scaledMapWidth) / 2;
+    } else {
+      mapContainer.x = Math.max(screenWidth - scaledMapWidth, Math.min(0, mapContainer.x));
+    }
+    if (scaledMapHeight <= screenHeight) {
+      mapContainer.y = (screenHeight - scaledMapHeight) / 2;
+    } else {
+      mapContainer.y = Math.max(screenHeight - scaledMapHeight, Math.min(0, mapContainer.y));
+    }
     
     // Update mini-game background size if visible
     if (miniGameContainer.visible && miniGameContainer.children.length > 0) {
